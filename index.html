@@ -1590,13 +1590,13 @@ setInterval(checkScheduledChapters, 60000);
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        <span>返回</span>
+        <span>Volver</span>
       </button>
     </div>
 
     <!-- Título -->
-    <h2 class="text-3xl font-bold mb-4 text-black text-center">獨家動畫頭像框</h2>
-    <p class="text-center text-gray-600 mb-8">使用独特的效果定制您的个人资料，其他用户将能够看到</p>
+    <h2 class="text-3xl font-bold mb-4 text-black text-center">Marcos de Avatar Exclusivos</h2>
+    <p class="text-center text-gray-600 mb-8">Personaliza tu perfil con efectos únicos que otros usuarios podrán ver</p>
     
     <!-- Grid de marcos expandido -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -1607,8 +1607,8 @@ setInterval(checkScheduledChapters, 60000);
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </div>
-        <span class="text-lg font-semibold">無框架</span>
-        <p class="text-sm text-gray-500 mt-2">基本资料</p>
+        <span class="text-lg font-semibold">Sin Marco</span>
+        <p class="text-sm text-gray-500 mt-2">Perfil básico</p>
         <div class="mt-3 bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">
           Free
         </div>
@@ -1619,8 +1619,8 @@ setInterval(checkScheduledChapters, 60000);
         <div class="w-24 h-24 mx-auto mb-4 rounded-full rainbow-frame flex items-center justify-center relative">
           <div class="w-20 h-20 rounded-full bg-gradient-to-r from-purple-400 to-pink-400"></div>
         </div>
-        <span class="text-lg font-semibold">彩虹</span>
-        <p class="text-sm text-gray-500 mt-2">色彩效果</p>
+        <span class="text-lg font-semibold">Arcoíris</span>
+        <p class="text-sm text-gray-500 mt-2">Efecto colorido</p>
         <div class="mt-3 bg-yellow-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center justify-center">
           <span class="mr-1">🪙</span> 25
         </div>
@@ -1856,7 +1856,7 @@ function loadFollowingStories() {
       firebase.database().ref('users/' + followedUserId).once('value').then(userSnap => {
         const userData = userSnap.val();
         
-        // 检查最近更新（最近24小时）
+        // Verificar actualizaciones recientes (últimas 24 horas)
         firebase.database().ref('stories').orderByChild('userId').equalTo(followedUserId).once('value').then(storiesSnap => {
           let hasNewContent = false;
           let latestStoryId = null;
@@ -1909,7 +1909,7 @@ function openLatestStory(authorId, storyId) {
   }
 }
 
-// 页面加载和用户状态变化时调用loadFollowingStories
+// Llamar loadFollowingStories al cargar la página y cuando cambie el estado del usuario
 document.addEventListener('DOMContentLoaded', loadFollowingStories);
 firebase.auth().onAuthStateChanged(user => {
   if (user) {
@@ -2070,8 +2070,8 @@ firebase.auth().onAuthStateChanged(user => {
       <div class="p-4 pb-24">
         <!-- Header -->
         <div class="text-center mb-8">
-          <h1 class="text-3xl font-bold text-[#FE2C55] mb-2">创作者中心</h1>
-          <p class="text-gray-600">创作精彩内容，与社区分享</p>
+          <h1 class="text-3xl font-bold text-[#FE2C55] mb-2">Centro de Creadores</h1>
+          <p class="text-gray-600">Crea contenido increíble y compártelo con la comunidad</p>
         </div>
 
         <!-- Grid de opciones de creación -->
@@ -2087,10 +2087,10 @@ firebase.auth().onAuthStateChanged(user => {
                   </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <h3 class="text-xl font-bold mb-2 text-black">创建故事</h3>
-                  <p class="text-gray-600 mb-3">撰写并发布您的原创故事</p>
+                  <h3 class="text-xl font-bold mb-2 text-black">Crear Historia</h3>
+                  <p class="text-gray-600 mb-3">Escribe y publica tus historias originales</p>
                   <div class="flex items-center text-[#FE2C55] group-hover:text-[#ef2950] transition-colors">
-                    <span class="font-medium mr-2">Start</span>
+                    <span class="font-medium mr-2">Comenzar</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
