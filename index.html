@@ -2111,8 +2111,8 @@ firebase.auth().onAuthStateChanged(user => {
   <!-- Tabs modernos -->
   <div class="bg-white px-4 py-2">
     <div class="flex gap-2">
-      <button onclick="switchCommunityTab('feed')" class="community-tab active" id="feed-tab">Feed</button>
-      <button onclick="switchCommunityTab('photos'); loadPhotos();" class="community-tab" id="photos-tab">Photos</button>
+      <button onclick="switchCommunityTab('feed')" class="community-tab active bg-[#FE2C55] text-white" id="feed-tab">Feed</button>
+      <button onclick="switchCommunityTab('photos'); loadPhotos();" class="community-tab bg-gray-100 text-gray-600" id="photos-tab">Photos</button>
     </div>
   </div>
     
@@ -2120,7 +2120,7 @@ firebase.auth().onAuthStateChanged(user => {
   <div class="p-4">
     <!-- Photos Section -->
     <div id="photos-feed" class="hidden">
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-3" id="photos-grid">
         <!-- Photos will be loaded dynamically here -->
       </div>
     </div>
@@ -2385,14 +2385,16 @@ firebase.auth().onAuthStateChanged(user => {
     const feedContent = document.getElementById('notes-feed');
     const photosContent = document.getElementById('photos-feed');
     
+    // Resetear estilos de ambos tabs
+    feedTab.className = 'community-tab bg-gray-100 text-gray-600';
+    photosTab.className = 'community-tab bg-gray-100 text-gray-600';
+    
     if (tab === 'feed') {
-      feedTab.classList.add('active');
-      photosTab.classList.remove('active');
+      feedTab.className = 'community-tab active bg-[#FE2C55] text-white';
       feedContent.classList.remove('hidden');
       photosContent.classList.add('hidden');
     } else if (tab === 'photos') {
-      photosTab.classList.add('active');
-      feedTab.classList.remove('active');
+      photosTab.className = 'community-tab active bg-[#FE2C55] text-white';
       photosContent.classList.remove('hidden');
       feedContent.classList.add('hidden');
     }
@@ -4481,13 +4483,10 @@ function saveNote() {
     <div class="gift-grid">
 
 async function loadPhotos() {
-  const photosFeed = document.getElementById('photos-feed');
-  if (!photosFeed) return;
+  const photosGrid = document.getElementById('photos-grid');
+  if (!photosGrid) return;
   
-  const photosContainer = photosFeed.querySelector('.grid');
-  if (!photosContainer) return;
-  
-  photosContainer.innerHTML = '';
+  photosGrid.innerHTML = '<div class="col-span-2 text-center py-8"><i class="fas fa-spinner fa-spin text-2xl text-[#FE2C55]"></i><p class="mt-2 text-gray-500">Cargando fotos...</p></div>';
 
   try {
     const response = await fetch('/.netlify/functions/get-notes?limit=50');
@@ -4499,26 +4498,31 @@ async function loadPhotos() {
 
     const photos = (result.notes || []).filter(note => note.imageUrl);
     
+    photosGrid.innerHTML = '';
+    
+    if (photos.length === 0) {
+      photosGrid.innerHTML = '<div class="col-span-2 text-center py-8"><i class="fas fa-camera text-4xl text-gray-300 mb-4"></i><p class="text-gray-500">No hay fotos aún</p><p class="text-sm text-gray-400">Las fotos de la comunidad aparecerán aquí</p></div>';
+      return;
+    }
+    
     photos.forEach(photo => {
       const photoCard = document.createElement('div');
-      photoCard.className = 'relative aspect-square cursor-pointer';
+      photoCard.className = 'relative aspect-square cursor-pointer rounded-lg overflow-hidden';
       photoCard.innerHTML = `
-        <img src="${photo.imageUrl || ''}" alt="" class="w-full h-full object-cover">
+        <img src="${photo.imageUrl}" alt="" class="w-full h-full object-cover hover:scale-105 transition-transform">
         <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
           <div class="flex items-center">
-            <img src="${photo.authorImage || 'https://via.placeholder.com/150'}" alt="${photo.authorName || 'Usuario'}" class="w-6 h-6 rounded-full mr-2">
-            <span class="text-white text-sm truncate">${photo.authorName || 'Usuario'}</span>
+            <img src="${photo.authorImage || 'https://via.placeholder.com/150'}" alt="${photo.authorName || 'Usuario'}" class="w-5 h-5 rounded-full mr-2">
+            <span class="text-white text-xs truncate">${photo.authorName || 'Usuario'}</span>
           </div>
         </div>
       `;
-      photoCard.onclick = () => {
-        openPhotoDetail(photo);
-      };
-      photosContainer.appendChild(photoCard);
+      photoCard.onclick = () => openPhotoDetail(photo);
+      photosGrid.appendChild(photoCard);
     });
   } catch (error) {
     console.error('Error loading photos:', error);
-    photosContainer.innerHTML = '<div class="col-span-2 text-center text-gray-500 py-8">Error al cargar fotos</div>';
+    photosGrid.innerHTML = '<div class="col-span-2 text-center py-8"><i class="fas fa-exclamation-triangle text-2xl text-red-500"></i><p class="mt-2 text-red-500">Error al cargar fotos</p></div>';
   }
 }
 
