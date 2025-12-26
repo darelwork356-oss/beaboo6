@@ -32,17 +32,21 @@ CREATE TABLE IF NOT EXISTS stories (
     user_id VARCHAR(255) NOT NULL,
     username VARCHAR(255),
     email VARCHAR(255),
-    cover_image_url TEXT NOT NULL,
-    s3_key TEXT NOT NULL,
+    title VARCHAR(500),
+    category VARCHAR(100),
+    rating VARCHAR(50),
+    language VARCHAR(50),
+    synopsis TEXT,
+    cover_image_url TEXT,
+    s3_key TEXT,
     views INTEGER DEFAULT 0,
+    rating_value DECIMAL(3,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_stories_user_id ON stories(user_id);
 CREATE INDEX IF NOT EXISTS idx_stories_created_at ON stories(created_at);
-CREATE INDEX IF NOT EXISTS idx_stories_expires_at ON stories(expires_at);
 
 -- Tabla de notas/publicaciones
 CREATE TABLE IF NOT EXISTS notes (
