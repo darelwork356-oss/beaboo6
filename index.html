@@ -1129,6 +1129,8 @@ setInterval(checkScheduledChapters, 60000);
     }
   </style>
   <link rel="stylesheet" href="stories.css">
+  <!-- Animación de Introducción Moderna Premium -->
+  <script src="premium-intro.js"></script>
   <script>
     /*********************** BLOQUEO DE ACCESO EN COMPUTADORAS (Móvil obligatorio) ***********************/
     function esDispositivoMovil() {
@@ -1660,12 +1662,12 @@ setInterval(checkScheduledChapters, 60000);
   <img src="https://ideogram.ai/g/hJJQb0VZSQicLDiADD7CZQ/3" alt="Historia Bloqueada" class="w-3/4 h-auto">
 </div>
 
-<body class="bg-white font-sans text-[#161823]">
+<body class="bg-white font-sans text-[#161823]" style="overflow: hidden;">
   
   <!-- Google Translate (oculto) -->
   <div id="google_translate_element" style="display:none !important; visibility:hidden !important; position:absolute; left:-9999px;"></div>
   
-  <div id="auth-form" class="w-full h-screen flex flex-col justify-center p-6" style="display: flex;">
+  <div id="auth-form" class="w-full h-screen flex flex-col justify-center p-6" style="display: none; opacity: 0;">
     <!-- Centered title -->
     <h1 id="auth-title" class="text-4xl font-bold text-center mb-8 text-[#FE2C55]">Zenvio</h1>
     <!-- Form takes full available width -->
@@ -1713,7 +1715,7 @@ setInterval(checkScheduledChapters, 60000);
 </body>
 
 <!-- APLICACIÓN PRINCIPAL ESTILO TIKTOK (MODO CLARO) -->
-<div id="main-app" class="h-screen flex flex-col bg-white font-sans text-black" style="display: none;">
+<div id="main-app" class="h-screen flex flex-col bg-white font-sans text-black" style="display: none; opacity: 0;">
   <!-- TOP BAR WITH NAME + ICONS -->
   <div id="top-navbar" class="flex items-center justify-between px-4 py-3 border-b border-gray-200 sticky top-0 z-50 bg-white">
     <h1 id="app-name" class="text-2xl font-bold text-[#161823]">BeaBoo</h1>
