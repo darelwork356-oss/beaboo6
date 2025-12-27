@@ -68,10 +68,16 @@ Tu app estará en: `https://tu-proyecto.vercel.app`
 
 ```bash
 # Ver notas
-https://tu-proyecto.vercel.app/api/get-notes
+https://tu-proyecto.vercel.app/api?action=get-notes
 
 # Ver historias
-https://tu-proyecto.vercel.app/api/get-stories
+https://tu-proyecto.vercel.app/api?action=get-stories
+
+# Ver usuario
+https://tu-proyecto.vercel.app/api?action=get-user-data&userId=test123
+
+# Ver capítulos de una historia
+https://tu-proyecto.vercel.app/api?action=get-chapters&storyId=story123
 ```
 
 ---
