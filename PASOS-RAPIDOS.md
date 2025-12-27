@@ -1,6 +1,6 @@
-# 🚀 PASOS PARA CONFIGURAR TODO (5 minutos)
+# PASOS PARA CONFIGURAR TODO (5 minutos)
 
-## 1️⃣ Conectar GitHub a Vercel
+## 1. Conectar GitHub a Vercel
 
 1. Ve a: https://vercel.com/new
 2. Click en "Import Git Repository"
@@ -8,7 +8,7 @@
 4. Click "Import"
 5. Click "Deploy" (no configures nada aún)
 
-## 2️⃣ Crear Base de Datos PostgreSQL
+## 2. Crear Base de Datos PostgreSQL
 
 1. En Vercel, ve a tu proyecto
 2. Click en "Storage" (menú lateral)
@@ -17,7 +17,7 @@
 5. Nombre: `beaboo-db`
 6. Click "Create"
 
-## 3️⃣ Ejecutar el Schema SQL
+## 3. Ejecutar el Schema SQL
 
 1. En la base de datos que creaste, click en "Query"
 2. Abre el archivo `schema.sql` de tu proyecto
@@ -25,7 +25,7 @@
 4. Pégalo en el Query editor de Vercel
 5. Click "Run Query"
 
-## 4️⃣ Configurar Variables de Entorno
+## 4. Configurar Variables de Entorno
 
 1. Ve a Settings > Environment Variables
 2. Agrega estas variables (una por una):
@@ -52,19 +52,19 @@ production
 
 3. Click "Save" en cada una
 
-## 5️⃣ Re-desplegar
+## 5. Re-desplegar
 
 1. Ve a "Deployments"
 2. Click en los 3 puntos del último deployment
 3. Click "Redeploy"
 
-## ✅ LISTO!
+## LISTO
 
 Tu app estará en: `https://tu-proyecto.vercel.app`
 
 ---
 
-## 🧪 Probar las APIs:
+## Probar las APIs
 
 ```bash
 # Ver notas
@@ -82,8 +82,9 @@ https://tu-proyecto.vercel.app/api?action=get-chapters&storyId=story123
 
 ---
 
-## ⚠️ Si algo falla:
+## Si algo falla
 
-1. Ve a Deployments > Click en el último > "View Function Logs"
-2. Busca errores en rojo
-3. Avísame qué dice el error
+1. Prueba la conexión: `https://tu-proyecto.vercel.app/api/test-db`
+2. Si sale error, ve a Deployments > Click en el último > "View Function Logs"
+3. Verifica que DATABASE_URL esté en Environment Variables
+4. Asegúrate de haber ejecutado el schema.sql completo
