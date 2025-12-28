@@ -1132,6 +1132,373 @@ setInterval(checkScheduledChapters, 60000);
   <!-- Animación de Introducción Moderna Premium -->
   <script src="premium-intro.js"></script>
   <script>
+// Sistema de Notificaciones en Tiempo Real con Firebase
+let notificationSystem = {
+  notifications: [],
+  currentFilter: 'all',
+  unreadCount: 0,
+  isListening: false,
+  notificationsRef: null,
+
+  init() {
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        this.startListening();
+        this.loadNotifications();
+      } else {
+        this.stopListening();
+      }
+    });
+  },
+
+  startListening() {
+    if (this.isListening) return;
+    
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    this.isListening = true;
+    this.notificationsRef = firebase.database().ref(`notifications/${user.uid}`);
+    
+    this.notificationsRef.on('child_added', (snapshot) => {
+      const notification = { id: snapshot.key, ...snapshot.val() };
+      this.addNotification(notification);
+    });
+
+    this.notificationsRef.on('child_changed', (snapshot) => {
+      const notification = { id: snapshot.key, ...snapshot.val() };
+      this.updateNotification(notification);
+    });
+  },
+
+  stopListening() {
+    if (this.notificationsRef) {
+      this.notificationsRef.off();
+    }
+    this.isListening = false;
+  },
+
+  async loadNotifications() {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    try {
+      const snapshot = await firebase.database().ref(`notifications/${user.uid}`)
+        .orderByChild('timestamp')
+        .limitToLast(50)
+        .once('value');
+      
+      this.notifications = [];
+      snapshot.forEach(child => {
+        this.notifications.unshift({ id: child.key, ...child.val() });
+      });
+
+      this.updateUnreadCount();
+      this.renderNotifications();
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  },
+
+  addNotification(notification) {
+    const exists = this.notifications.find(n => n.id === notification.id);
+    if (exists) return;
+
+    this.notifications.unshift(notification);
+    
+    if (this.notifications.length > 100) {
+      this.notifications = this.notifications.slice(0, 100);
+    }
+
+    this.updateUnreadCount();
+    this.renderNotifications();
+    
+    if (!notification.read && document.visibilityState === 'visible') {
+      this.showToast(notification);
+    }
+  },
+
+  updateNotification(notification) {
+    const index = this.notifications.findIndex(n => n.id === notification.id);
+    if (index !== -1) {
+      this.notifications[index] = notification;
+      this.updateUnreadCount();
+      this.renderNotifications();
+    }
+  },
+
+  updateUnreadCount() {
+    this.unreadCount = this.notifications.filter(n => !n.read).length;
+    this.updateBadge();
+  },
+
+  updateBadge() {
+    const notificationBtn = document.querySelector('[onclick="openNotifications()"]');
+    if (notificationBtn) {
+      let badge = notificationBtn.querySelector('.notification-badge');
+      
+      if (this.unreadCount > 0) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'notification-badge';
+          badge.style.cssText = `
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: #FE2C55;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid white;
+          `;
+          notificationBtn.style.position = 'relative';
+          notificationBtn.appendChild(badge);
+        }
+        badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+  },
+
+  renderNotifications() {
+    const container = document.getElementById('notifications-list');
+    const loading = document.getElementById('notifications-loading');
+    const empty = document.getElementById('notifications-empty');
+    
+    if (!container) return;
+
+    loading.classList.add('hidden');
+    
+    const filteredNotifications = this.getFilteredNotifications();
+    
+    if (filteredNotifications.length === 0) {
+      container.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+
+    empty.classList.add('hidden');
+    
+    container.innerHTML = filteredNotifications.map(notification => 
+      this.createNotificationHTML(notification)
+    ).join('');
+
+    container.querySelectorAll('.notification-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const notificationId = item.dataset.notificationId;
+        this.markAsRead(notificationId);
+      });
+    });
+  },
+
+  getFilteredNotifications() {
+    let filtered = [...this.notifications];
+    
+    switch (this.currentFilter) {
+      case 'new':
+        filtered = filtered.filter(n => !n.read);
+        break;
+      case 'system':
+        filtered = filtered.filter(n => n.type === 'system');
+        break;
+      case 'follow':
+        filtered = filtered.filter(n => n.type === 'follow');
+        break;
+      case 'like':
+        filtered = filtered.filter(n => n.type === 'like');
+        break;
+      case 'comment':
+        filtered = filtered.filter(n => n.type === 'comment');
+        break;
+    }
+    
+    return filtered.sort((a, b) => b.timestamp - a.timestamp);
+  },
+
+  createNotificationHTML(notification) {
+    const timeAgo = this.getTimeAgo(notification.timestamp);
+    const isUnread = !notification.read;
+    
+    let icon = '';
+    switch (notification.type) {
+      case 'follow': icon = '👤'; break;
+      case 'like': icon = '❤️'; break;
+      case 'comment': icon = '💬'; break;
+      case 'system': icon = '⚙️'; break;
+      default: icon = '📢';
+    }
+
+    return `
+      <div class="notification-item ${isUnread ? 'unread' : 'read'}" data-notification-id="${notification.id}">
+        ${isUnread ? '<div class="notification-badge"></div>' : ''}
+        <div class="flex items-start space-x-3">
+          <div class="notification-icon ${notification.type}">
+            ${icon}
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between">
+              <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+              <span class="text-xs text-gray-500">${timeAgo}</span>
+            </div>
+            <p class="text-sm text-gray-600 mt-1">${notification.message}</p>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  getTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (minutes < 1) return 'Ahora';
+    if (minutes < 60) return `${minutes}m`;
+    if (hours < 24) return `${hours}h`;
+    if (days < 7) return `${days}d`;
+    
+    return new Date(timestamp).toLocaleDateString();
+  },
+
+  async markAsRead(notificationId) {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    try {
+      await firebase.database().ref(`notifications/${user.uid}/${notificationId}`).update({
+        read: true,
+        readAt: Date.now()
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  },
+
+  async markAllAsRead() {
+    const user = firebase.auth().currentUser;
+    if (!user) return;
+
+    try {
+      const updates = {};
+      this.notifications.forEach(notification => {
+        if (!notification.read) {
+          updates[`notifications/${user.uid}/${notification.id}/read`] = true;
+          updates[`notifications/${user.uid}/${notification.id}/readAt`] = Date.now();
+        }
+      });
+      
+      await firebase.database().ref().update(updates);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  },
+
+  showToast(notification) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-white border border-gray-200 rounded-lg shadow-lg p-4 max-w-sm z-[10000] transform translate-x-full transition-transform duration-300';
+    toast.innerHTML = `
+      <div class="flex items-start space-x-3">
+        <div class="notification-icon ${notification.type}">
+          ${this.getNotificationIcon(notification.type)}
+        </div>
+        <div class="flex-1">
+          <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+          <p class="text-xs text-gray-600 mt-1">${notification.message}</p>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    setTimeout(() => {
+      toast.style.transform = 'translateX(full)';
+      setTimeout(() => toast.remove(), 300);
+    }, 5000);
+  },
+
+  getNotificationIcon(type) {
+    switch (type) {
+      case 'follow': return '👤';
+      case 'like': return '❤️';
+      case 'comment': return '💬';
+      case 'system': return '⚙️';
+      default: return '📢';
+    }
+  }
+};
+
+// Funciones globales
+function openNotifications() {
+  document.getElementById('notifications-modal').classList.remove('hidden');
+  notificationSystem.loadNotifications();
+}
+
+function closeNotifications() {
+  document.getElementById('notifications-modal').classList.add('hidden');
+}
+
+function filterNotifications(filter) {
+  document.querySelectorAll('.notification-filter').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+  
+  notificationSystem.currentFilter = filter;
+  notificationSystem.renderNotifications();
+}
+
+function markAllAsRead() {
+  notificationSystem.markAllAsRead();
+}
+
+// Función para crear notificaciones
+async function addNotification(userId, message, type = 'system', additionalData = {}) {
+  let title = 'Notificación';
+  
+  switch (type) {
+    case 'follow': title = 'Nuevo seguidor'; break;
+    case 'like': title = 'Le gusta tu historia'; break;
+    case 'comment': title = 'Nuevo comentario'; break;
+    case 'system': title = 'Notificación del sistema'; break;
+  }
+  
+  const notificationData = {
+    title,
+    message,
+    type,
+    timestamp: Date.now(),
+    read: false,
+    ...additionalData
+  };
+
+  await firebase.database().ref(`notifications/${userId}`).push(notificationData);
+}
+
+// Inicializar sistema
+document.addEventListener('DOMContentLoaded', () => {
+  notificationSystem.init();
+});
+</script>
+  <script>
     /*********************** BLOQUEO DE ACCESO EN COMPUTADORAS (Móvil obligatorio) ***********************/
     function esDispositivoMovil() {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -2803,19 +3170,109 @@ firebase.auth().onAuthStateChanged(user => {
     color: #374151;
   }
 
-  /* Estilos para el generador de imágenes */
-  #image-generator-modal .animate-spin {
-    animation: spin 1s linear infinite;
+  /* Estilos para notificaciones */
+  .notification-filter {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: all 0.2s;
+    cursor: pointer;
   }
-  
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+
+  .notification-filter:hover {
+    border-color: #FE2C55;
+    color: #FE2C55;
   }
-  
-  #generated-image {
-    max-height: 300px;
-    object-fit: contain;
+
+  .notification-filter.active {
+    background: #FE2C55;
+    color: white;
+    border-color: #FE2C55;
+  }
+
+  .notification-item {
+    padding: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .notification-item:hover {
+    border-color: #FE2C55;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(254, 44, 85, 0.1);
+  }
+
+  .notification-item.unread {
+    border-left: 4px solid #FE2C55;
+    background: #fef7f7;
+  }
+
+  .notification-item.read {
+    opacity: 0.7;
+  }
+
+  .notification-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #FE2C55;
+    border-radius: 50%;
+    border: 2px solid white;
+  }
+
+  .notification-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 4px;
+  }
+
+  .notification-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+
+  .notification-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .notification-icon.follow {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .notification-icon.like {
+    background: #ef4444;
+    color: white;
+  }
+
+  .notification-icon.comment {
+    background: #10b981;
+    color: white;
+  }
+
+  .notification-icon.system {
+    background: #6366f1;
+    color: white;
   }
 
   /* Estilos del autor */
