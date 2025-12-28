@@ -7334,85 +7334,56 @@ document.getElementById('category-filter').addEventListener('change', performRea
 
   function saveProfileEdits() {
     const user = firebase.auth().currentUser;
-    if (!user) return;
+    if (!user) {
+      alert('Debes iniciar sesión');
+      return;
+    }
     
-    // Detectar si estamos en móvil o desktop
+    console.log('Guardando perfil...');
+    
     const isMobile = window.innerWidth < 1024;
-    const newUsername = isMobile ? 
-      document.getElementById('edit-username').value : 
-      document.getElementById('edit-username-desktop').value;
     
-    // Validar cambio de nombre de usuario (solo cada 7 días)
-    firebase.database().ref('users/' + user.uid).once('value').then(snapshot => {
-      const userData = snapshot.val() || {};
-      const lastUsernameChange = userData.lastUsernameChange || 0;
-      const timeSinceLastChange = Date.now() - lastUsernameChange;
-      const USERNAME_CHANGE_COOLDOWN = 7 * 24 * 60 * 60 * 1000; // 7 días
-      
-      if (newUsername !== userData.username && timeSinceLastChange < USERNAME_CHANGE_COOLDOWN) {
-        const daysLeft = Math.ceil((USERNAME_CHANGE_COOLDOWN - timeSinceLastChange) / (24 * 60 * 60 * 1000));
-        alert(`No puedes cambiar tu nombre de usuario hasta dentro de ${daysLeft} días.`);
-        return;
-      }
-      
-      let updates = {};
-      
-      if (isMobile) {
-        // Datos desde campos móviles
-        updates = {
-          name: document.getElementById('edit-name').value,
-          username: newUsername,
-          pronouns: document.getElementById('edit-pronouns').value,
-          bio: document.getElementById('edit-bio').value,
-          instagram: document.getElementById('edit-instagram').value,
-          tiktokUsername: document.getElementById('edit-tiktok').value,
-          website: document.getElementById('edit-website').value,
-          city: document.getElementById('edit-city').value,
-          gender: document.getElementById('edit-gender').value,
-          birthday: document.getElementById('edit-birthday').value
-        };
-      } else {
-        // Datos desde campos desktop
-        updates = {
-          username: newUsername,
-          firstName: document.getElementById('edit-first-name-desktop').value,
-          lastName: document.getElementById('edit-last-name-desktop').value,
-          bio: document.getElementById('edit-bio-desktop').value,
-          website: document.getElementById('edit-website-desktop').value,
-          instagram: document.getElementById('edit-instagram-desktop').value,
-          tiktokUsername: document.getElementById('edit-tiktok-desktop').value,
-          city: document.getElementById('edit-city-desktop').value,
-          gender: document.getElementById('edit-gender-desktop').value,
-          birthday: document.getElementById('edit-birthday-desktop').value
-        };
-      }
-      
-      // Si cambió el nombre de usuario, actualizar timestamp
-      if (newUsername !== userData.username) {
-        updates.lastUsernameChange = Date.now();
-      }
-      if (updates.username === "darheel_") {
-        updates.followersCount = 19000;
-        updates.founder = true;
-        updates.isVerified = true;
-      }
-      
-      firebase.database().ref('users/' + user.uid).update(updates)
-        .then(() => {
-          addNotification(user.uid, translations[currentLanguage].usernameUpdated);
-          let newName = updates.username;
-          if (updates.founder) {
-            newName += ' <span class="founder-tag">Fundador</span>';
-          }
-          newName += getVerificationIcon(updates.email || user.email);
-          document.getElementById('profile-username').innerHTML = newName;
-          alert("Perfil actualizado");
-          closeProfileEdit();
-        })
-        .catch(error => {
-          console.error("Error al guardar cambios en el perfil:", error);
-        });
-    });
+    let updates = {};
+    
+    if (isMobile) {
+      updates = {
+        name: document.getElementById('edit-name')?.value || '',
+        username: document.getElementById('edit-username')?.value || '',
+        pronouns: document.getElementById('edit-pronouns')?.value || '',
+        bio: document.getElementById('edit-bio')?.value || '',
+        instagram: document.getElementById('edit-instagram')?.value || '',
+        website: document.getElementById('edit-website')?.value || '',
+        city: document.getElementById('edit-city')?.value || '',
+        gender: document.getElementById('edit-gender')?.value || '',
+        birthday: document.getElementById('edit-birthday')?.value || ''
+      };
+    } else {
+      updates = {
+        username: document.getElementById('edit-username-desktop')?.value || '',
+        firstName: document.getElementById('edit-first-name-desktop')?.value || '',
+        lastName: document.getElementById('edit-last-name-desktop')?.value || '',
+        bio: document.getElementById('edit-bio-desktop')?.value || '',
+        website: document.getElementById('edit-website-desktop')?.value || '',
+        instagram: document.getElementById('edit-instagram-desktop')?.value || '',
+        city: document.getElementById('edit-city-desktop')?.value || '',
+        gender: document.getElementById('edit-gender-desktop')?.value || '',
+        birthday: document.getElementById('edit-birthday-desktop')?.value || ''
+      };
+    }
+    
+    console.log('Datos a guardar:', updates);
+    
+    firebase.database().ref('users/' + user.uid).update(updates)
+      .then(() => {
+        console.log('Perfil guardado exitosamente');
+        alert('Perfil actualizado correctamente');
+        closeProfileEdit();
+        location.reload();
+      })
+      .catch(error => {
+        console.error('Error al guardar:', error);
+        alert('Error al guardar: ' + error.message);
+      });
   }
 
   function uploadEditProfileImage() {
