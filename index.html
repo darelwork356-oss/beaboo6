@@ -3757,7 +3757,7 @@ function saveNote() {
       <!-- Biografía y sitio web -->
       <div id="author-bio" class="text-center text-gray-600 mt-2 max-w-md"></div>
       <!-- Redes sociales -->
-      <div id="author-social-links" class="flex space-x-4 mt-4"></div>
+      <div id="author-social-links" class="flex justify-center items-center space-x-6 mt-6 mb-4"></div>
 
       <!-- Estadísticas encima de botones -->
       <div class="flex space-x-8 mt-6">
@@ -7544,13 +7544,13 @@ document.getElementById('category-filter').addEventListener('change', performRea
       }, 500);
       let socialLinksHTML = "";
       if (authorData.instagram) {
-        socialLinksHTML += `<a href="${authorData.instagram}" target="_blank"><img src="https://img.utdstc.com/icon/847/f33/847f33af27bea889ccaa9b1d25135b42ff5bb590297182d0983afb7304d96884:200" alt="Instagram" class="w-6 h-6"></a>`;
+        socialLinksHTML += `<a href="${authorData.instagram}" target="_blank" class="transform hover:scale-110 transition-transform duration-200"><img src="https://img.utdstc.com/icon/847/f33/847f33af27bea889ccaa9b1d25135b42ff5bb590297182d0983afb7304d96884:200" alt="Instagram" class="w-10 h-10 rounded-lg"></a>`;
       }
       if (authorData.tiktokUsername) {
-        socialLinksHTML += `<a href="https://www.tiktok.com/@${authorData.tiktokUsername}" target="_blank"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/28/tiktok-6338432_1280.png" alt="TikTok" class="w-6 h-6"></a>`;
+        socialLinksHTML += `<a href="https://www.tiktok.com/@${authorData.tiktokUsername}" target="_blank" class="transform hover:scale-110 transition-transform duration-200"><img src="https://cdn.pixabay.com/photo/2021/06/15/12/28/tiktok-6338432_1280.png" alt="TikTok" class="w-10 h-10 rounded-lg"></a>`;
       }
       if (authorData.website) {
-        socialLinksHTML += `<a href="${authorData.website}" target="_blank"><i class="fa-solid fa-globe text-2xl"></i></a>`;
+        socialLinksHTML += `<a href="${authorData.website}" target="_blank" class="transform hover:scale-110 transition-transform duration-200 flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg"><i class="fa-solid fa-globe text-2xl text-gray-700"></i></a>`;
       }
       document.getElementById('author-social-links').innerHTML = socialLinksHTML;
       
