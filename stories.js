@@ -1,8 +1,7 @@
-
 // js/stories.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Firebase Config - Solo para autenticación
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBWBr3sud1_lDPmtLJI42pCBZnco5_vyCc",
         authDomain: "noble-amp-458106-g0.firebaseapp.com",
@@ -14,12 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
         measurementId: "G-XEQ1J354HM"
     };
 
-    // Initialize Firebase (solo para autenticación)
+    // Initialize Firebase
     if (!firebase.apps.length) {
         firebase.initializeApp(firebaseConfig);
     }
 
     const auth = firebase.auth();
+    const database = firebase.database();
 
     const storiesContainer = document.getElementById('stories');
     const storyViewer = document.getElementById('story-viewer');
@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('story-file').addEventListener('change', handleFileSelect);
-
     document.getElementById('story-upload-form').addEventListener('submit', handleStoryUpload);
     document.getElementById('story-viewer-close').addEventListener('click', closeStoryViewer);
 
@@ -45,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadStories();
     }, 500);
     
-    // Reload stories every 30 seconds to show new stories from other users
+    // Reload stories every 30 seconds
     setInterval(() => {
         loadStories();
     }, 30000);
@@ -85,42 +84,33 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadStories() {
         const currentUser = auth.currentUser;
         if (!currentUser) {
-            // Intentar de nuevo en 1 segundo si el usuario no está autenticado aún
             setTimeout(loadStories, 1000);
             return;
         }
 
         try {
-            // Obtener historias
-            const response = await fetch('/.netlify/functions/get-stories', {
-                method: 'GET',
-            });
-
-            const result = await response.json();
+            const storiesRef = database.ref('stories');
+            const snapshot = await storiesRef.once('value');
+            const stories = [];
             
-            if (!response.ok) {
-                throw new Error(result.error || 'Error al cargar historias');
-            }
+            snapshot.forEach(child => {
+                const story = { id: child.key, ...child.val() };
+                stories.push(story);
+            });
 
             storiesContainer.innerHTML = '';
 
-            if (result.stories && result.stories.length > 0) {
+            if (stories.length > 0) {
                 // Filtrar historias recientes (últimas 12 horas)
                 const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-                const recentStories = result.stories.filter(story => story.timestamp > twelveHoursAgo);
+                const recentStories = stories.filter(story => story.timestamp > twelveHoursAgo);
 
                 // Eliminar historias viejas automáticamente
-                const oldStories = result.stories.filter(story => story.timestamp <= twelveHoursAgo);
+                const oldStories = stories.filter(story => story.timestamp <= twelveHoursAgo);
                 oldStories.forEach(async (story) => {
                     try {
-                        await fetch('/.netlify/functions/delete-story', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ storyId: story.id })
-                        });
-                        console.log(`Historia ${story.id} eliminada automáticamente (más de 12 horas)`);
+                        await database.ref('stories/' + story.id).remove();
+                        console.log(`Historia ${story.id} eliminada automáticamente`);
                     } catch (error) {
                         console.error('Error eliminando historia antigua:', error);
                     }
@@ -135,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     storiesByUser[story.userId].push(story);
                 });
 
-                // Crear elementos de historias en orden horizontal
+                // Crear elementos de historias
                 for (const userId in storiesByUser) {
                     const userStories = storiesByUser[userId];
                     if (userStories.length > 0) {
@@ -156,11 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const storyDiv = document.createElement('div');
         storyDiv.className = 'story';
         
-        // Usar username, nunca email, y saltar si es anónimo
         let displayName = storyData.username || storyData.email?.split('@')[0] || '';
         
-        // No mostrar historias anónimas
-        if (!displayName || displayName.toLowerCase() === 'anónimo' || displayName.toLowerCase() === 'anonimo') {
+        if (!displayName || displayName.toLowerCase() === 'anónimo') {
             return null;
         }
         
@@ -199,6 +187,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const userId = currentUser.uid;
         const timestamp = Date.now();
+        const storyId = `story_${userId}_${timestamp}`;
 
         progressText.textContent = 'Procesando...';
         progressBar.style.width = '50%';
@@ -208,35 +197,25 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const base64Image = e.target.result;
                 
-                progressText.textContent = 'Subiendo...';
+                progressText.textContent = 'Guardando...';
                 progressBar.style.width = '70%';
                 
-                // Publicar relato
-                const response = await fetch('/.netlify/functions/upload-story', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title: 'Story',
-                        category: 'story',
-                        rating: 'all',
-                        language: 'es',
-                        synopsis: '',
-                        userId: userId,
-                        username: currentUser.displayName || currentUser.email,
-                        email: currentUser.email,
-                        coverImageData: base64Image,
-                        coverImageFileName: file.name,
-                        coverImageContentType: file.type
-                    })
-                });
-
-                const result = await response.json();
+                // Guardar en Firebase Database con imagen en base64
+                const storyData = {
+                    title: 'Story',
+                    category: 'story',
+                    rating: 'all',
+                    language: 'es',
+                    synopsis: '',
+                    userId: userId,
+                    username: currentUser.displayName || currentUser.email,
+                    email: currentUser.email,
+                    coverImage: base64Image,
+                    timestamp: timestamp,
+                    views: 0
+                };
                 
-                if (!response.ok) {
-                    throw new Error(result.error || 'Error al publicar relato');
-                }
+                await database.ref('stories/' + storyId).set(storyData);
                 
                 progressBar.style.width = '100%';
                 progressText.textContent = '¡Relato publicado!';
@@ -250,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 500);
             } catch (error) {
                 console.error("Error al publicar relato:", error);
-                alert('Error al publicar el relato. Por favor intenta de nuevo. Error: ' + error.message);
+                alert('Error al publicar el relato: ' + error.message);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Publicar Relato';
                 progressDiv.style.display = 'none';
@@ -258,72 +237,50 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
         
-        reader.onerror = (error) => {
-            console.error("Error al leer imagen:", error);
-            alert('Error al procesar la imagen');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Publicar Relato';
-            progressDiv.style.display = 'none';
-            progressBar.style.width = '0%';
-        };
-        
         reader.readAsDataURL(file);
     }
 
     async function openStoryViewer(userId) {
         try {
-            // Obtener historias del usuario desde AWS S3
-            const response = await fetch(`/.netlify/functions/get-stories?userId=${userId}`, {
-                method: 'GET',
+            const storiesRef = database.ref('stories').orderByChild('userId').equalTo(userId);
+            const snapshot = await storiesRef.once('value');
+            const stories = [];
+            
+            snapshot.forEach(child => {
+                const story = { id: child.key, ...child.val() };
+                stories.push(story);
             });
 
-            const result = await response.json();
-            
-            if (!response.ok || !result.stories || result.stories.length === 0) {
-                return;
-            }
+            if (stories.length === 0) return;
 
             // Filtrar solo historias de las últimas 12 horas
             const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
-            const stories = result.stories.filter(story => story.timestamp > twelveHoursAgo);
+            const recentStories = stories.filter(story => story.timestamp > twelveHoursAgo);
             
-            if (stories.length === 0) {
-                return;
-            }
+            if (recentStories.length === 0) return;
+
             const storyContent = document.querySelector('.story-content');
             storyContent.innerHTML = '';
 
-            stories.sort((a, b) => a.timestamp - b.timestamp);
+            recentStories.sort((a, b) => a.timestamp - b.timestamp);
             
             let currentStoryIndex = 0;
             const currentUser = auth.currentUser;
 
             function showStory(index) {
-                const story = stories[index];
+                const story = recentStories[index];
 
                 // Incrementar vistas
                 if (currentUser && currentUser.uid !== userId) {
-                    fetch('/.netlify/functions/update-story', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            storyId: story.id,
-                            updates: {
-                                views: (story.views || 0) + 1
-                            }
-                        })
-                    }).catch(err => console.error('Error updating views:', err));
+                    database.ref('stories/' + story.id + '/views').transaction(views => (views || 0) + 1);
                 }
 
-                // Usar username, nunca email
                 const displayName = story.username || story.email?.split('@')[0] || 'Usuario';
                 
                 storyContent.innerHTML = `
                     <div class="story-header">
                         <div class="story-progress-container">
-                            ${stories.map((_, i) => `<div class="story-progress"><div class="story-progress-bar" style="width: ${i < index ? '100%' : (i === index ? '0%' : '0%')}"></div></div>`).join('')}
+                            ${recentStories.map((_, i) => `<div class="story-progress"><div class="story-progress-bar" style="width: ${i < index ? '100%' : (i === index ? '0%' : '0%')}"></div></div>`).join('')}
                         </div>
                         <div class="story-user-info">
                             <span class="username">${displayName}</span>
@@ -352,7 +309,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     progressBar.style.width = '100%';
                 }, 100);
 
-                // Event listener para el botón de cerrar
                 const closeButton = storyContent.querySelector('.story-close');
                 if (closeButton) {
                     closeButton.addEventListener('click', (e) => {
@@ -361,14 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
-                // Agregar event listener para opciones
                 const optionsButton = storyContent.querySelector('.story-options');
                 if (optionsButton) {
                     optionsButton.addEventListener('click', (e) => {
                         e.stopPropagation();
                         const storyIdToDelete = e.currentTarget.dataset.storyId;
                         
-                        // Crear menú de opciones desde abajo
                         const existingMenu = document.querySelector('.story-options-menu');
                         if (existingMenu) {
                             existingMenu.classList.remove('active');
@@ -387,24 +341,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.body.appendChild(menu);
                         setTimeout(() => menu.classList.add('active'), 10);
                         
-                        // Event listener para eliminar
                         menu.querySelector('.delete-option').addEventListener('click', async (e) => {
                             e.stopPropagation();
                             menu.classList.remove('active');
                             setTimeout(() => menu.remove(), 300);
                             
-                            // Mostrar animación de carga
-                            const loadingDiv = document.createElement('div');
-                            loadingDiv.className = 'delete-loading';
-                            loadingDiv.innerHTML = '<div class="spinner"></div>';
-                            document.body.appendChild(loadingDiv);
-                            
                             await deleteStory(storyIdToDelete);
-                            
-                            loadingDiv.remove();
                         });
                         
-                        // Cerrar menú al hacer click fuera
                         setTimeout(() => {
                             const closeMenuOnClick = (e) => {
                                 if (!menu.contains(e.target) && !e.target.closest('.story-options')) {
@@ -419,13 +363,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 setTimeout(() => {
-                    if (currentStoryIndex < stories.length - 1) {
+                    if (currentStoryIndex < recentStories.length - 1) {
                         currentStoryIndex++;
                         showStory(currentStoryIndex);
                     } else {
                         closeStoryViewer();
                     }
-                }, 5000); // 5 segundos por historia
+                }, 5000);
             }
 
             showStory(currentStoryIndex);
@@ -437,20 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function deleteStory(storyId) {
         try {
-            const response = await fetch('/.netlify/functions/delete-story', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ storyId })
-            });
-
-            const result = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(result.error || 'Error al eliminar historia');
-            }
-            
+            await database.ref('stories/' + storyId).remove();
             closeStoryViewer();
             loadStories();
         } catch (error) {
