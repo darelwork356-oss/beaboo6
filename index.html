@@ -4009,13 +4009,47 @@ function previewCover(event) {
 
     <!-- Contenido -->
     <div class="flex-1 overflow-y-auto p-4">
+      <!-- Portada -->
+      <div class="mb-4">
+        <label for="edit-story-cover" class="block cursor-pointer">
+          <div id="edit-cover-preview" class="w-full h-48 bg-gray-100 rounded-xl border border-gray-300 flex items-center justify-center overflow-hidden">
+            <img id="edit-cover-image" class="w-full h-full object-cover" alt="Portada">
+          </div>
+          <input id="edit-story-cover" type="file" accept="image/*" class="hidden" onchange="previewEditCover(event)">
+        </label>
+        <p class="text-xs text-gray-500 mt-2 text-center">Toca para cambiar portada</p>
+      </div>
+
+      <!-- Título -->
+      <div class="mb-4">
+        <input id="edit-story-title" type="text" placeholder="Título" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#FE2C55]">
+      </div>
+
+      <!-- Categoría -->
+      <div class="mb-4">
+        <select id="edit-story-category" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#FE2C55] appearance-none">
+          <option value="aventura">Aventura</option>
+          <option value="romance">Romance</option>
+          <option value="misterio">Misterio</option>
+          <option value="fantasia">Fantasía</option>
+          <option value="terror">Terror</option>
+          <option value="ciencia_ficcion">Ciencia Ficción</option>
+          <option value="drama">Drama</option>
+          <option value="comedia">Comedia</option>
+        </select>
+      </div>
+
       <!-- Idioma -->
       <div class="mb-4">
         <select id="edit-story-language" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#FE2C55] appearance-none">
-          <option value="">Idioma</option>
-          <option value="English">English</option>
           <option value="Spanish">Español</option>
+          <option value="English">English</option>
         </select>
+      </div>
+
+      <!-- Sinopsis -->
+      <div class="mb-6">
+        <textarea id="edit-story-synopsis" placeholder="Sinopsis" class="w-full p-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-[#FE2C55] resize-none" rows="4"></textarea>
       </div>
 
       <!-- Capítulos -->
@@ -4043,6 +4077,19 @@ function previewCover(event) {
     </div>
   </div>
 </div>
+
+<script>
+function previewEditCover(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('edit-cover-image').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+}
+</script>
 
 <!-- MODAL DE CREACIÓN/EDICIÓN DE CAPÍTULO -->
 <div id="chapter-creation-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
@@ -6919,17 +6966,65 @@ async function likeNote(noteId) {
       alert(translations[currentLanguage].noEditingStory);
       return;
     }
-    const newLanguage = document.getElementById('edit-story-language').value;
-    firebase.database().ref('stories/' + currentEditingStory.id).update({
-        language: newLanguage
-      })
-      .then(() => {
-        currentEditingStory.language = newLanguage;
-        alert("Cambios guardados en la historia.");
-      })
-      .catch(error => {
-        console.error("Error al actualizar la historia:", error);
-      });
+    
+    const updates = {
+      title: document.getElementById('edit-story-title').value,
+      category: document.getElementById('edit-story-category').value,
+      language: document.getElementById('edit-story-language').value,
+      synopsis: document.getElementById('edit-story-synopsis').value
+    };
+    
+    // Si hay nueva portada, subirla
+    const coverInput = document.getElementById('edit-story-cover');
+    if (coverInput.files && coverInput.files[0]) {
+      const file = coverInput.files[0];
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const response = await fetch('/.netlify/functions/upload-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageData: e.target.result,
+              fileName: file.name,
+              userId: firebase.auth().currentUser.uid,
+              timestamp: Date.now(),
+              contentType: file.type,
+              imageType: 'story-cover'
+            })
+          });
+          const result = await response.json();
+          if (response.ok) {
+            updates.coverImage = result.imageUrl;
+          }
+        } catch (error) {
+          console.error('Error al subir portada:', error);
+        }
+        
+        // Guardar todos los cambios
+        firebase.database().ref('stories/' + currentEditingStory.id).update(updates)
+          .then(() => {
+            Object.assign(currentEditingStory, updates);
+            alert('Cambios guardados correctamente');
+          })
+          .catch(error => {
+            console.error('Error al actualizar:', error);
+            alert('Error al guardar cambios');
+          });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Guardar sin cambiar portada
+      firebase.database().ref('stories/' + currentEditingStory.id).update(updates)
+        .then(() => {
+          Object.assign(currentEditingStory, updates);
+          alert('Cambios guardados correctamente');
+        })
+        .catch(error => {
+          console.error('Error al actualizar:', error);
+          alert('Error al guardar cambios');
+        });
+    }
   }
 
   function openProfile() {
