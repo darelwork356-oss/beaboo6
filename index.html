@@ -8044,7 +8044,6 @@ document.getElementById('category-filter').addEventListener('change', performRea
   document.getElementById('chapter-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const content = document.getElementById('chapter-content').value;
-    const scheduledDate = document.getElementById('chapter-schedule').value;
     
     if (!currentEditingStory) {
       alert(translations[currentLanguage].noEditingStory);
@@ -8075,40 +8074,23 @@ document.getElementById('category-filter').addEventListener('change', performRea
         chapterNumber,
         content,
         createdAt: Date.now(),
-        status: scheduledDate ? 'scheduled' : 'published'
+        status: "published"
       };
 
       const chapterRef = firebase.database().ref('stories/' + currentEditingStory.id + '/chapters').push();
       newChapter.id = chapterRef.key;
       
-      if (scheduledDate) {
-        // Guardar en capítulos programados
-        firebase.database().ref('scheduledChapters/' + chapterRef.key).set({
-          storyId: currentEditingStory.id,
-          publishDate: new Date(scheduledDate).getTime(),
-          status: 'pending'
+      chapterRef.set(newChapter)
+        .then(() => {
+          currentChapters.push(newChapter);
+          closeChapterCreationModal();
+          alert("Capítulo publicado correctamente");
+          loadChaptersForEdit();
+        })
+        .catch(error => {
+          console.error("Error al crear capítulo:", error);
+          alert("Error al crear capítulo");
         });
-        
-        // Guardar el capítulo con estado programado
-        chapterRef.set(newChapter)
-          .then(() => {
-            closeChapterCreationModal();
-            alert("Capítulo programado para publicación el " + new Date(scheduledDate).toLocaleDateString());
-          })
-          .catch(error => {
-            console.error("Error al programar capítulo:", error);
-          });
-      } else {
-        // Publicación inmediata
-        chapterRef.set(newChapter)
-          .then(() => {
-            closeChapterCreationModal();
-            alert(translations[currentLanguage].chapterAdded);
-          })
-          .catch(error => {
-            console.error("Error al agregar capítulo:", error);
-          });
-      }
     }
   });
 
