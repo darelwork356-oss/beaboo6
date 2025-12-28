@@ -152,6 +152,25 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  
+  <!-- Firebase Configuration -->
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBWBr3sud1_lDPmtLJI42pCBZnco5_vyCc",
+      authDomain: "noble-amp-458106-g0.firebaseapp.com",
+      databaseURL: "https://noble-amp-458106-g0-default-rtdb.firebaseio.com",
+      projectId: "noble-amp-458106-g0",
+      storageBucket: "noble-amp-458106-g0.firebasestorage.app",
+      messagingSenderId: "744574411059",
+      appId: "1:744574411059:web:72a70955f1400df6645e46",
+      measurementId: "G-XEQ1J354HM"
+    };
+    
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
   <style>
     /* ESTILOS BASE CHATGPT STYLE */
 body {
@@ -1128,9 +1147,493 @@ setInterval(checkScheduledChapters, 60000);
       cursor: pointer;
     }
   </style>
-  <link rel="stylesheet" href="stories.css">
-  <!-- Animación de Introducción Moderna Premium -->
-  <script src="premium-intro.js"></script>
+  <!-- Estilos consolidados -->
+  <style>
+    /* Stories CSS */
+    .stories-container {
+      padding: 4px 16px 8px 16px;
+      border-bottom: 1px solid #dbdbdb;
+      overflow: hidden;
+      margin-top: 0;
+    }
+    
+    .stories {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 8px;
+      white-space: nowrap;
+    }
+    
+    .stories::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .story {
+      cursor: pointer;
+      text-align: center;
+      flex-shrink: 0;
+      min-width: 66px;
+      max-width: 66px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      vertical-align: top;
+    }
+    
+    .story .image-container {
+      width: 66px;
+      height: 66px;
+      border-radius: 50%;
+      padding: 3px;
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    
+    .story .image-container img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      object-fit: cover;
+    }
+    
+    .story .username {
+      font-size: 12px;
+      margin-top: 4px;
+      width: 66px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .add-story .image-container {
+      background: #fafafa;
+      border: 1px dashed #dbdbdb;
+    }
+    
+    .add-story .image-container i {
+      font-size: 24px;
+      color: #262626;
+    }
+    
+    #story-viewer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    #story-viewer.active {
+      display: flex;
+    }
+    
+    .story-content {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    
+    @media (min-width: 768px) {
+      .story-content {
+        max-width: 400px;
+        max-height: 90vh;
+        border-radius: 8px;
+      }
+    }
+    
+    .story-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+      z-index: 1;
+    }
+    
+    .story-progress-container {
+      display: flex;
+      gap: 4px;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    
+    .story-progress {
+      flex: 1;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+    }
+    
+    .story-progress-bar {
+      height: 100%;
+      background: #fff;
+      width: 0;
+      transition: width 5s linear;
+      border-radius: 2px;
+    }
+    
+    .story-user-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+    
+    .story-user-info .username {
+      color: #fff;
+      font-weight: bold;
+      font-size: 14px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    
+    .story-top-controls {
+      position: absolute;
+      top: 60px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 200;
+    }
+    
+    .story-close {
+      color: #fff;
+      font-size: 28px;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .story-options {
+      color: #fff;
+      font-size: 24px;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+    
+    .story-close:hover, .story-options:hover {
+      background: rgba(254, 44, 85, 0.8);
+      transform: scale(1.1);
+    }
+    
+    .story-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    .story-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%);
+    }
+    
+    .story-views {
+      color: #fff;
+    }
+    
+    .story-options-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      padding: 24px;
+      min-height: 50vh;
+      z-index: 20000;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .story-options-menu.active {
+      transform: translateY(0);
+    }
+    
+    .story-options-menu button {
+      width: 100%;
+      padding: 20px;
+      background: transparent;
+      color: #262626;
+      border: none;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: background 0.2s;
+      font-size: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .story-options-menu button i {
+      font-size: 32px;
+    }
+    
+    .story-options-menu button:hover {
+      background: rgba(254, 44, 85, 0.1);
+    }
+    
+    .story-options-menu button.delete-option {
+      color: #ff4444;
+    }
+    
+    .story-options-menu button.delete-option:hover {
+      background: rgba(255, 68, 68, 0.1);
+    }
+    
+    .delete-loading {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30000;
+    }
+    
+    .delete-loading .spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #FE2C55;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    #story-upload-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+      z-index: 10001;
+      display: none;
+      overflow-y: auto;
+    }
+    
+    #story-upload-modal.active {
+      display: block;
+    }
+    
+    .story-upload-content {
+      background: #fff;
+      padding: 24px;
+      min-height: 100vh;
+      width: 100%;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .story-upload-content h2 {
+      color: #262626;
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      text-align: left;
+      flex-shrink: 0;
+    }
+    
+    .story-upload-preview {
+      width: 100%;
+      max-height: 60vh;
+      margin-bottom: 20px;
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    
+    .story-upload-preview img {
+      width: 100%;
+      height: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      background: #f5f5f5;
+    }
+    
+    .file-input-wrapper {
+      position: relative;
+      width: 100%;
+      margin-bottom: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .file-input-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      flex-grow: 1;
+      min-height: 300px;
+      border: 2px dashed #dbdbdb;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: #fafafa;
+    }
+    
+    .file-input-label:hover {
+      border-color: #FE2C55;
+      background: #fff;
+    }
+    
+    .file-input-label i {
+      font-size: 48px;
+      color: #FE2C55;
+      margin-bottom: 12px;
+    }
+    
+    .file-input-label span {
+      color: #262626;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .file-input-label .file-hint {
+      color: #8e8e8e;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+    
+    #story-file {
+      display: none;
+    }
+    
+    #story-upload-form button[type="submit"] {
+      width: 100%;
+      padding: 14px;
+      background: #FE2C55;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 12px;
+    }
+    
+    #story-upload-form button[type="submit"]:hover:not(:disabled) {
+      background: #e02849;
+      transform: scale(1.02);
+    }
+    
+    #story-upload-form button[type="submit"]:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    
+    .story-upload-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #efefef;
+      flex-shrink: 0;
+    }
+    
+    .story-upload-header .back-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: #262626;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    
+    .story-upload-header .back-btn:hover {
+      background: #f5f5f5;
+      border-radius: 50%;
+    }
+    
+    .upload-progress {
+      display: none;
+      margin-bottom: 16px;
+    }
+    
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background: #efefef;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    
+    .progress-bar {
+      height: 100%;
+      background: #FE2C55;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+      color: #8e8e8e;
+      font-size: 14px;
+      text-align: center;
+    }
+  </style>
   <script>
 // Sistema de Notificaciones en Tiempo Real con Firebase
 let notificationSystem = {
@@ -1497,7 +2000,894 @@ async function addNotification(userId, message, type = 'system', additionalData 
 document.addEventListener('DOMContentLoaded', () => {
   notificationSystem.init();
 });
-</script>
+
+// Versión Premium de la Animación de Introducción
+class PremiumIntroAnimation {
+  constructor() {
+    this.duration = 5000;
+    this.init();
+  }
+
+  init() {
+    if (sessionStorage.getItem('introShown')) {
+      this.showMainContent();
+      return;
+    }
+
+    this.createPremiumIntro();
+    this.startPremiumAnimation();
+    sessionStorage.setItem('introShown', 'true');
+  }
+
+  createPremiumIntro() {
+    const introDiv = document.createElement('div');
+    introDiv.id = 'premium-intro';
+    introDiv.innerHTML = `
+      <style>
+        #premium-intro {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #10a37f 100%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 10000;
+          overflow: hidden;
+        }
+
+        .premium-logo {
+          font-size: 4.5rem;
+          font-weight: 900;
+          color: white;
+          text-shadow: 0 0 30px rgba(255,255,255,0.5);
+          opacity: 0;
+          transform: scale(0.5) rotateY(90deg);
+          animation: logoEntrance 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s forwards;
+        }
+
+        .premium-tagline {
+          font-size: 1.3rem;
+          color: rgba(255, 255, 255, 0.9);
+          text-align: center;
+          margin-top: 1rem;
+          opacity: 0;
+          transform: translateY(30px);
+          animation: slideUpFade 1s ease-out 1.8s forwards;
+        }
+
+        .geometric-shapes {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .shape {
+          position: absolute;
+          background: rgba(255, 255, 255, 0.1);
+          animation: shapeFloat 8s ease-in-out infinite;
+        }
+
+        .shape.triangle {
+          width: 0;
+          height: 0;
+          background: transparent;
+          border-left: 30px solid transparent;
+          border-right: 30px solid transparent;
+          border-bottom: 50px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .shape.square {
+          width: 40px;
+          height: 40px;
+          transform: rotate(45deg);
+        }
+
+        .shape.circle {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+        }
+
+        .premium-progress {
+          width: 320px;
+          height: 6px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 3px;
+          margin-top: 3rem;
+          overflow: hidden;
+          opacity: 0;
+          animation: slideUpFade 0.8s ease-out 2.5s forwards;
+        }
+
+        .premium-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #10a37f, #0d8b6f, #ffffff);
+          border-radius: 3px;
+          width: 0%;
+          animation: premiumProgressFill 2.2s ease-out 2.8s forwards;
+          box-shadow: 0 0 20px rgba(16, 163, 127, 0.8);
+        }
+
+        .loading-indicator {
+          display: flex;
+          gap: 12px;
+          margin-top: 2rem;
+          opacity: 0;
+          animation: slideUpFade 0.8s ease-out 3s forwards;
+        }
+
+        .indicator-dot {
+          width: 12px;
+          height: 12px;
+          background: white;
+          border-radius: 50%;
+          animation: dotWave 1.6s ease-in-out infinite;
+        }
+
+        .indicator-dot:nth-child(2) { animation-delay: 0.2s; }
+        .indicator-dot:nth-child(3) { animation-delay: 0.4s; }
+        .indicator-dot:nth-child(4) { animation-delay: 0.6s; }
+
+        .status-text {
+          color: rgba(255, 255, 255, 0.8);
+          font-size: 1rem;
+          margin-top: 1.5rem;
+          opacity: 0;
+          animation: slideUpFade 0.8s ease-out 3.2s forwards;
+          text-align: center;
+        }
+
+        @keyframes logoEntrance {
+          0% {
+            opacity: 0;
+            transform: scale(0.5) rotateY(90deg);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.1) rotateY(0deg);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) rotateY(0deg);
+          }
+        }
+
+        @keyframes slideUpFade {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes shapeFloat {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+            opacity: 0.3;
+          }
+          25% {
+            transform: translateY(-30px) rotate(90deg);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translateY(-60px) rotate(180deg);
+            opacity: 0.5;
+          }
+          75% {
+            transform: translateY(-30px) rotate(270deg);
+            opacity: 0.8;
+          }
+        }
+
+        @keyframes premiumProgressFill {
+          from { width: 0%; }
+          to { width: 100%; }
+        }
+
+        @keyframes dotWave {
+          0%, 100% {
+            opacity: 0.4;
+            transform: scale(1) translateY(0);
+          }
+          50% {
+            opacity: 1;
+            transform: scale(1.3) translateY(-10px);
+          }
+        }
+
+        .fade-out-premium {
+          opacity: 0;
+          transform: scale(1.1);
+          transition: all 1s ease-out;
+        }
+      </style>
+
+      <div class="geometric-shapes">
+        <div class="shape circle" style="top: 15%; left: 10%; animation-delay: 0s;"></div>
+        <div class="shape square" style="top: 25%; right: 15%; animation-delay: 2s;"></div>
+        <div class="shape triangle" style="bottom: 30%; left: 20%; animation-delay: 4s;"></div>
+        <div class="shape circle" style="top: 60%; right: 25%; animation-delay: 1s;"></div>
+        <div class="shape square" style="bottom: 20%; right: 10%; animation-delay: 3s;"></div>
+      </div>
+
+      <div class="premium-logo">BeaBoo</div>
+      <div class="premium-tagline">Tu universo de historias te espera</div>
+
+      <div class="premium-progress">
+        <div class="premium-progress-fill"></div>
+      </div>
+
+      <div class="loading-indicator">
+        <div class="indicator-dot"></div>
+        <div class="indicator-dot"></div>
+        <div class="indicator-dot"></div>
+        <div class="indicator-dot"></div>
+      </div>
+
+      <div class="status-text">Creando tu experiencia personalizada...</div>
+    `;
+
+    document.body.appendChild(introDiv);
+  }
+
+  startPremiumAnimation() {
+    const statusText = document.querySelector('.status-text');
+    const messages = [
+      'Creando tu experiencia personalizada...',
+      'Cargando historias increíbles...',
+      'Conectando con escritores...',
+      'Preparando la magia...',
+      '¡Bienvenido a BeaBoo!'
+    ];
+
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      if (messageIndex < messages.length - 1) {
+        messageIndex++;
+        if (statusText) {
+          statusText.style.opacity = '0';
+          setTimeout(() => {
+            statusText.textContent = messages[messageIndex];
+            statusText.style.opacity = '1';
+          }, 300);
+        }
+      } else {
+        clearInterval(messageInterval);
+      }
+    }, 800);
+
+    setTimeout(() => {
+      this.fadeOutPremium();
+    }, this.duration);
+  }
+
+  fadeOutPremium() {
+    const introElement = document.getElementById('premium-intro');
+    if (introElement) {
+      introElement.classList.add('fade-out-premium');
+      
+      setTimeout(() => {
+        introElement.remove();
+        this.showMainContent();
+      }, 1000);
+    }
+  }
+
+  showMainContent() {
+    document.body.style.overflow = 'auto';
+    
+    // Verificar autenticación y mostrar contenido apropiado
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          this.showApp();
+        } else {
+          this.showAuth();
+        }
+      });
+    } else {
+      // Fallback si Firebase no está disponible
+      this.showAuth();
+    }
+  }
+
+  showApp() {
+    const mainApp = document.getElementById('main-app');
+    if (mainApp) {
+      mainApp.style.display = 'flex';
+      setTimeout(() => {
+        mainApp.style.transition = 'opacity 0.6s ease-in';
+        mainApp.style.opacity = '1';
+      }, 100);
+    }
+  }
+
+  showAuth() {
+    const authForm = document.getElementById('auth-form');
+    if (authForm) {
+      authForm.style.display = 'flex';
+      setTimeout(() => {
+        authForm.style.transition = 'opacity 0.6s ease-in';
+        authForm.style.opacity = '1';
+      }, 100);
+    }
+  }
+}
+
+// Reemplazar la animación original con la versión premium
+document.addEventListener('DOMContentLoaded', () => {
+  if (!sessionStorage.getItem('introShown')) {
+    new PremiumIntroAnimation();
+  } else {
+    // Si ya se mostró, mostrar contenido directamente
+    document.body.style.overflow = 'auto';
+    if (typeof firebase !== 'undefined' && firebase.auth) {
+      firebase.auth().onAuthStateChanged((user) => {
+        if (user) {
+          const mainApp = document.getElementById('main-app');
+          if (mainApp) {
+            mainApp.style.display = 'flex';
+            mainApp.style.opacity = '1';
+          }
+        } else {
+          const authForm = document.getElementById('auth-form');
+          if (authForm) {
+            authForm.style.display = 'flex';
+            authForm.style.opacity = '1';
+          }
+        }
+      });
+    }
+  }
+});
+
+// Stories JavaScript consolidado
+document.addEventListener('DOMContentLoaded', () => {
+  const storiesContainer = document.getElementById('stories');
+  const storyViewer = document.getElementById('story-viewer');
+  const storyUploadModal = document.getElementById('story-upload-modal');
+
+  // Event Listeners
+  document.getElementById('add-story-btn').addEventListener('click', () => {
+    storyUploadModal.classList.add('active');
+  });
+
+  document.getElementById('story-upload-back').addEventListener('click', () => {
+    storyUploadModal.classList.remove('active');
+    resetUploadForm();
+  });
+
+  document.getElementById('story-file').addEventListener('change', handleFileSelect);
+  document.getElementById('story-upload-form').addEventListener('submit', handleStoryUpload);
+  document.getElementById('story-viewer-close').addEventListener('click', closeStoryViewer);
+
+  // Load stories automatically on page load
+  setTimeout(() => {
+    loadStories();
+  }, 500);
+  
+  // Reload stories every 30 seconds
+  setInterval(() => {
+    loadStories();
+  }, 30000);
+
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const preview = document.querySelector('.story-upload-preview');
+        const previewImg = preview.querySelector('img');
+        previewImg.src = event.target.result;
+        preview.style.display = 'block';
+        
+        const fileLabel = document.querySelector('.file-input-label');
+        fileLabel.style.display = 'none';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  function resetUploadForm() {
+    document.getElementById('story-upload-form').reset();
+    const preview = document.querySelector('.story-upload-preview');
+    preview.style.display = 'none';
+    const fileLabel = document.querySelector('.file-input-label');
+    fileLabel.style.display = 'flex';
+    
+    const progressDiv = document.querySelector('.upload-progress');
+    if (progressDiv) {
+      progressDiv.style.display = 'none';
+      const progressBar = progressDiv.querySelector('.progress-bar');
+      progressBar.style.width = '0%';
+    }
+  }
+
+  async function loadStories() {
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+      setTimeout(loadStories, 1000);
+      return;
+    }
+
+    try {
+      const storiesRef = firebase.database().ref('stories');
+      const snapshot = await storiesRef.once('value');
+      const stories = [];
+      
+      snapshot.forEach(child => {
+        const story = { id: child.key, ...child.val() };
+        stories.push(story);
+      });
+
+      storiesContainer.innerHTML = '';
+
+      if (stories.length > 0) {
+        // Filtrar historias recientes (últimas 12 horas)
+        const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+        const recentStories = stories.filter(story => story.timestamp > twelveHoursAgo);
+
+        // Eliminar historias viejas automáticamente
+        const oldStories = stories.filter(story => story.timestamp <= twelveHoursAgo);
+        oldStories.forEach(async (story) => {
+          try {
+            await firebase.database().ref('stories/' + story.id).remove();
+            console.log(`Historia ${story.id} eliminada automáticamente`);
+          } catch (error) {
+            console.error('Error eliminando historia antigua:', error);
+          }
+        });
+
+        // Agrupar por usuario
+        const storiesByUser = {};
+        recentStories.forEach(story => {
+          if (!storiesByUser[story.userId]) {
+            storiesByUser[story.userId] = [];
+          }
+          storiesByUser[story.userId].push(story);
+        });
+
+        // Crear elementos de historias
+        for (const userId in storiesByUser) {
+          const userStories = storiesByUser[userId];
+          if (userStories.length > 0) {
+            const latestStory = userStories[0];
+            const storyElement = createStoryElement(latestStory, userId);
+            if (storyElement) {
+              storiesContainer.appendChild(storyElement);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading stories:', error);
+    }
+  }
+
+  function createStoryElement(storyData, userId) {
+    const storyDiv = document.createElement('div');
+    storyDiv.className = 'story';
+    
+    let displayName = storyData.username || storyData.email?.split('@')[0] || '';
+    
+    if (!displayName || displayName.toLowerCase() === 'anónimo') {
+      return null;
+    }
+    
+    storyDiv.innerHTML = `
+      <div class="image-container">
+        <img src="${storyData.coverImage || 'https://via.placeholder.com/150'}" alt="${displayName}">
+      </div>
+      <div class="username">${displayName}</div>
+    `;
+    storyDiv.addEventListener('click', () => openStoryViewer(userId));
+    return storyDiv;
+  }
+
+  function handleStoryUpload(e) {
+    e.preventDefault();
+    const file = document.getElementById('story-file').files[0];
+    if (!file) {
+      alert('Por favor selecciona una imagen para tu relato');
+      return;
+    }
+
+    const currentUser = firebase.auth().currentUser;
+    if (!currentUser) {
+      alert("Debes iniciar sesión para publicar un relato.");
+      return;
+    }
+
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Publicando...';
+
+    const progressDiv = document.querySelector('.upload-progress');
+    const progressBar = progressDiv.querySelector('.progress-bar');
+    const progressText = progressDiv.querySelector('.progress-text');
+    progressDiv.style.display = 'block';
+
+    const userId = currentUser.uid;
+    const timestamp = Date.now();
+    const storyId = `story_${userId}_${timestamp}`;
+
+    progressText.textContent = 'Procesando...';
+    progressBar.style.width = '50%';
+    
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const base64Image = e.target.result;
+        
+        progressText.textContent = 'Guardando...';
+        progressBar.style.width = '70%';
+        
+        // Guardar en Firebase Database con imagen en base64
+        const storyData = {
+          title: 'Story',
+          category: 'story',
+          rating: 'all',
+          language: 'es',
+          synopsis: '',
+          userId: userId,
+          username: currentUser.displayName || currentUser.email,
+          email: currentUser.email,
+          coverImage: base64Image,
+          timestamp: timestamp,
+          views: 0
+        };
+        
+        await firebase.database().ref('stories/' + storyId).set(storyData);
+        
+        progressBar.style.width = '100%';
+        progressText.textContent = '¡Relato publicado!';
+        
+        setTimeout(() => {
+          storyUploadModal.classList.remove('active');
+          resetUploadForm();
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Publicar Relato';
+          loadStories();
+        }, 500);
+      } catch (error) {
+        console.error("Error al publicar relato:", error);
+        alert('Error al publicar el relato: ' + error.message);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Publicar Relato';
+        progressDiv.style.display = 'none';
+        progressBar.style.width = '0%';
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  }
+
+  async function openStoryViewer(userId) {
+    try {
+      const storiesRef = firebase.database().ref('stories').orderByChild('userId').equalTo(userId);
+      const snapshot = await storiesRef.once('value');
+      const stories = [];
+      
+      snapshot.forEach(child => {
+        const story = { id: child.key, ...child.val() };
+        stories.push(story);
+      });
+
+      if (stories.length === 0) return;
+
+      // Filtrar solo historias de las últimas 12 horas
+      const twelveHoursAgo = Date.now() - (12 * 60 * 60 * 1000);
+      const recentStories = stories.filter(story => story.timestamp > twelveHoursAgo);
+      
+      if (recentStories.length === 0) return;
+
+      const storyContent = document.querySelector('.story-content');
+      storyContent.innerHTML = '';
+
+      recentStories.sort((a, b) => a.timestamp - b.timestamp);
+      
+      let currentStoryIndex = 0;
+      const currentUser = firebase.auth().currentUser;
+
+      function showStory(index) {
+        const story = recentStories[index];
+
+        // Incrementar vistas
+        if (currentUser && currentUser.uid !== userId) {
+          firebase.database().ref('stories/' + story.id + '/views').transaction(views => (views || 0) + 1);
+        }
+
+        const displayName = story.username || story.email?.split('@')[0] || 'Usuario';
+        
+        storyContent.innerHTML = `
+          <div class="story-header">
+            <div class="story-progress-container">
+              ${recentStories.map((_, i) => `<div class="story-progress"><div class="story-progress-bar" style="width: ${i < index ? '100%' : (i === index ? '0%' : '0%')}"></div></div>`).join('')}
+            </div>
+            <div class="story-user-info">
+              <span class="username">${displayName}</span>
+            </div>
+          </div>
+          <div class="story-top-controls">
+            <button class="story-close">×</button>
+            ${currentUser && currentUser.uid === userId ? `
+              <div class="story-options" data-story-id="${story.id}">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                  <circle cx="12" cy="5" r="2"/>
+                  <circle cx="12" cy="12" r="2"/>
+                  <circle cx="12" cy="19" r="2"/>
+                </svg>
+              </div>
+            ` : ''}
+          </div>
+          <img src="${story.coverImage}" class="story-image">
+          <div class="story-footer">
+            <div class="story-views">${story.views || 0} vistas</div>
+          </div>
+        `;
+
+        const progressBar = storyContent.querySelectorAll('.story-progress-bar')[index];
+        setTimeout(() => {
+          progressBar.style.width = '100%';
+        }, 100);
+
+        const closeButton = storyContent.querySelector('.story-close');
+        if (closeButton) {
+          closeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            closeStoryViewer();
+          });
+        }
+
+        const optionsButton = storyContent.querySelector('.story-options');
+        if (optionsButton) {
+          optionsButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const storyIdToDelete = e.currentTarget.dataset.storyId;
+            
+            const existingMenu = document.querySelector('.story-options-menu');
+            if (existingMenu) {
+              existingMenu.classList.remove('active');
+              setTimeout(() => existingMenu.remove(), 300);
+            }
+            
+            const menu = document.createElement('div');
+            menu.className = 'story-options-menu';
+            menu.innerHTML = `
+              <button class="delete-option">
+                <i class="fas fa-trash-alt"></i>
+                <span>Eliminar historia</span>
+              </button>
+            `;
+            
+            document.body.appendChild(menu);
+            setTimeout(() => menu.classList.add('active'), 10);
+            
+            menu.querySelector('.delete-option').addEventListener('click', async (e) => {
+              e.stopPropagation();
+              menu.classList.remove('active');
+              setTimeout(() => menu.remove(), 300);
+              
+              await deleteStory(storyIdToDelete);
+            });
+            
+            setTimeout(() => {
+              const closeMenuOnClick = (e) => {
+                if (!menu.contains(e.target) && !e.target.closest('.story-options')) {
+                  menu.classList.remove('active');
+                  setTimeout(() => menu.remove(), 300);
+                  document.removeEventListener('click', closeMenuOnClick);
+                }
+              };
+              document.addEventListener('click', closeMenuOnClick);
+            }, 100);
+          });
+        }
+
+        setTimeout(() => {
+          if (currentStoryIndex < recentStories.length - 1) {
+            currentStoryIndex++;
+            showStory(currentStoryIndex);
+          } else {
+            closeStoryViewer();
+          }
+        }, 5000);
+      }
+
+      showStory(currentStoryIndex);
+      storyViewer.classList.add('active');
+    } catch (error) {
+      console.error('Error opening story viewer:', error);
+    }
+  }
+
+  async function deleteStory(storyId) {
+    try {
+      await firebase.database().ref('stories/' + storyId).remove();
+      closeStoryViewer();
+      loadStories();
+    } catch (error) {
+      console.error("Error deleting story:", error);
+      alert('Error al eliminar la historia');
+    }
+  }
+
+  function closeStoryViewer() {
+    storyViewer.classList.remove('active');
+  }
+});
+
+// Funciones para la comunidad con Firebase
+async function publishNote() {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert('Debes iniciar sesión para publicar una nota');
+    return;
+  }
+
+  const noteContent = document.getElementById('note-content').value.trim();
+  const noteImage = document.getElementById('note-image').files[0];
+  
+  if (!noteContent && !noteImage) {
+    alert('Escribe algo o agrega una imagen');
+    return;
+  }
+
+  try {
+    const noteData = {
+      content: noteContent,
+      userId: user.uid,
+      username: user.displayName || user.email,
+      timestamp: Date.now(),
+      likes: 0
+    };
+
+    if (noteImage) {
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        noteData.image = e.target.result;
+        await firebase.database().ref('communityNotes').push(noteData);
+        document.getElementById('note-content').value = '';
+        document.getElementById('note-image').value = '';
+        removeImage();
+        loadNotes();
+      };
+      reader.readAsDataURL(noteImage);
+    } else {
+      await firebase.database().ref('communityNotes').push(noteData);
+      document.getElementById('note-content').value = '';
+      loadNotes();
+    }
+  } catch (error) {
+    console.error('Error publishing note:', error);
+    alert('Error al publicar la nota');
+  }
+}
+
+async function loadNotes() {
+  try {
+    const snapshot = await firebase.database().ref('communityNotes').orderByChild('timestamp').limitToLast(50).once('value');
+    const notes = [];
+    
+    snapshot.forEach(child => {
+      notes.unshift({ id: child.key, ...child.val() });
+    });
+
+    const notesFeed = document.getElementById('notes-feed');
+    notesFeed.innerHTML = '';
+
+    notes.forEach(note => {
+      const noteElement = document.createElement('div');
+      noteElement.className = 'bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-4';
+      noteElement.innerHTML = `
+        <div class="flex items-start space-x-3">
+          <div class="w-10 h-10 bg-[#FE2C55] rounded-full flex items-center justify-center text-white font-bold">
+            ${note.username.charAt(0).toUpperCase()}
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-gray-900">${note.username}</span>
+              <span class="text-sm text-gray-500">${getTimeAgo(note.timestamp)}</span>
+            </div>
+            ${note.content ? `<p class="text-gray-700 mt-2">${note.content}</p>` : ''}
+            ${note.image ? `<img src="${note.image}" class="mt-3 rounded-xl max-h-96 w-full object-cover" alt="Imagen de la nota">` : ''}
+            <div class="flex items-center space-x-4 mt-3">
+              <button onclick="likeNote('${note.id}')" class="flex items-center space-x-1 text-gray-500 hover:text-[#FE2C55] transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                </svg>
+                <span>${note.likes || 0}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      notesFeed.appendChild(noteElement);
+    });
+  } catch (error) {
+    console.error('Error loading notes:', error);
+  }
+}
+
+function getTimeAgo(timestamp) {
+  const now = Date.now();
+  const diff = now - timestamp;
+  
+  const minutes = Math.floor(diff / (1000 * 60));
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (minutes < 1) return 'Ahora';
+  if (minutes < 60) return `${minutes}m`;
+  if (hours < 24) return `${hours}h`;
+  if (days < 7) return `${days}d`;
+  
+  return new Date(timestamp).toLocaleDateString();
+}
+
+async function likeNote(noteId) {
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    alert('Debes iniciar sesión para dar like');
+    return;
+  }
+
+  try {
+    await firebase.database().ref(`communityNotes/${noteId}/likes`).transaction(likes => (likes || 0) + 1);
+    loadNotes();
+  } catch (error) {
+    console.error('Error liking note:', error);
+  }
+}
+
+function handleNoteImagePreview(event) {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('preview-img').src = e.target.result;
+      document.getElementById('image-preview').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function removeImage() {
+  document.getElementById('note-image').value = '';
+  document.getElementById('image-preview').classList.add('hidden');
+}
+
+function openNoteCreation() {
+  document.getElementById('add-note-form').classList.remove('hidden');
+}
+
+function openCommunity() {
+  document.getElementById('community-view').classList.remove('hidden');
+  loadNotes();
+}
+
+function closeCommunity() {
+  document.getElementById('community-view').classList.add('hidden');
+}
+
+// Cargar notas cuando se abre la comunidad
+document.addEventListener('DOMContentLoaded', () => {
+  // Cargar notas automáticamente si el usuario está autenticado
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      loadNotes();
+    }
+  });
+});
+  </script>
   <script>
     /*********************** BLOQUEO DE ACCESO EN COMPUTADORAS (Móvil obligatorio) ***********************/
     function esDispositivoMovil() {
@@ -2082,9 +3472,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-<!-- MODAL DE HISTORIA BLOQUEADA -->
-<div id="story-blocked-modal">
-  <img src="https://ideogram.ai/g/hJJQb0VZSQicLDiADD7CZQ/3" alt="Historia Bloqueada" class="w-3/4 h-auto">
+<!-- Story Viewer Modal -->
+<div id="story-viewer" class="fixed inset-0 bg-black z-[10000] hidden">
+  <div class="story-content w-full h-full relative">
+    <!-- Content will be dynamically inserted here -->
+  </div>
+</div>
+
+<!-- Story Upload Modal -->
+<div id="story-upload-modal" class="fixed inset-0 bg-white z-[10001] hidden">
+  <div class="story-upload-content">
+    <div class="story-upload-header">
+      <button id="story-upload-back" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+      </button>
+      <h2>Nuevo Relato</h2>
+    </div>
+    
+    <div class="story-upload-preview">
+      <img src="" alt="Preview">
+    </div>
+    
+    <div class="file-input-wrapper">
+      <label for="story-file" class="file-input-label">
+        <i class="fas fa-camera"></i>
+        <span>Seleccionar imagen</span>
+        <div class="file-hint">JPG, PNG hasta 10MB</div>
+      </label>
+      <input type="file" id="story-file" accept="image/*">
+    </div>
+    
+    <div class="upload-progress">
+      <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+      </div>
+      <div class="progress-text">Subiendo...</div>
+    </div>
+    
+    <form id="story-upload-form">
+      <button type="submit">Publicar Relato</button>
+    </form>
+  </div>
 </div>
 
 <body class="bg-white font-sans text-[#161823]" style="overflow: hidden;">
