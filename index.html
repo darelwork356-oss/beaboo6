@@ -4150,16 +4150,6 @@ function previewEditCover(event) {
         </svg>
         Anterior
       </button>
-      <div id="rating-container" class="flex items-center space-x-3">
-        <span class="text-gray-700 font-medium">Califica:</span>
-        <div id="star-rating" class="flex">
-          <span class="star cursor-pointer text-2xl text-gray-400 hover:text-[#FE2C55] transition-colors duration-150" data-value="1">★</span>
-          <span class="star cursor-pointer text-2xl text-gray-400 hover:text-[#FE2C55] transition-colors duration-150" data-value="2">★</span>
-          <span class="star cursor-pointer text-2xl text-gray-400 hover:text-[#FE2C55] transition-colors duration-150" data-value="3">★</span>
-          <span class="star cursor-pointer text-2xl text-gray-400 hover:text-[#FE2C55] transition-colors duration-150" data-value="4">★</span>
-          <span class="star cursor-pointer text-2xl text-gray-400 hover:text-[#FE2C55] transition-colors duration-150" data-value="5">★</span>
-        </div>
-      </div>
       <button id="next-chapter-btn" class="bg-[#FE2C55] text-white px-5 py-3 rounded-lg shadow hover:shadow-md hover:bg-red-600 transition-all duration-200 focus:outline-none flex items-center gap-2 font-medium" onclick="nextChapter()">
         Siguiente
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -8216,38 +8206,6 @@ document.getElementById('category-filter').addEventListener('change', performRea
   }
 
   function setupStarRating(storyId, chapterId) {
-    const stars = document.querySelectorAll("#star-rating .star");
-    stars.forEach(star => {
-      star.classList.remove("selected");
-    });
-    const user = firebase.auth().currentUser;
-    if (!user) return;
-    const ratingRef = firebase.database().ref('stories/' + storyId + '/chapters/' + chapterId + '/ratings/' + user.uid);
-    ratingRef.once('value').then(snapshot => {
-      const rating = snapshot.val();
-      if (rating) {
-        stars.forEach(star => {
-          if (parseInt(star.getAttribute('data-value')) <= rating) {
-            star.classList.add("selected");
-          }
-        });
-      }
-    });
-    stars.forEach(star => {
-      star.onclick = function() {
-        const value = parseInt(this.getAttribute('data-value'));
-        ratingRef.set(value)
-          .then(() => {
-            stars.forEach(s => {
-              if (parseInt(s.getAttribute('data-value')) <= value) {
-                s.classList.add("selected");
-              } else {
-                s.classList.remove("selected");
-              }
-            });
-            alert(translations[currentLanguage].chapterRated.replace("{value}", value));
-          })
-          .catch(error => {
             console.error("Error al guardar calificación:", error);
           });
       };
