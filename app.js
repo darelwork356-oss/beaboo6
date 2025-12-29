@@ -1,8 +1,10 @@
 // Global variables initialization - No duplicates!
-let isLogin = true; // Changed from isLoggingIn to isLogin to match HTML
-let currentEditingStory = null; // Can be null, will be set when needed
+let isLogin = true;
+let currentEditingStory = null;
+let currentViewedAuthorId = null; // For followers/following modals
 let currentLanguage = localStorage.getItem('language') || 'es';
 let currentUser = null;
+window.currentViewedAuthorId = currentViewedAuthorId; // Expose globally
 
 // Wait for DOM to be ready, then initialize variables
 function initializeGlobalVariables() {
@@ -13,7 +15,6 @@ function initializeGlobalVariables() {
   window.toggleAuth = document.getElementById('toggleAuth');
   window.authForm = document.getElementById('authForm');
   window.authError = document.getElementById('authError');
-  window.authForm = document.getElementById('auth-form');
   window.mainApp = document.getElementById('main-app');
   
   // Now set up event listeners
@@ -60,7 +61,6 @@ function initializeGlobalVariables() {
           .then(userCredential => {
             console.log("Usuario autenticado:", userCredential.user);
             currentUser = userCredential.user;
-            // Mostrar app, ocultar formulario
             showMainApp();
           })
           .catch(error => {
@@ -76,7 +76,6 @@ function initializeGlobalVariables() {
             const user = userCredential.user;
             currentUser = user;
             
-            // Create user in database
             if (typeof firebase !== 'undefined' && firebase.database) {
               const userCountRef = firebase.database().ref('userCount');
               userCountRef.transaction(count => (count || 0) + 1).then(result => {
@@ -113,7 +112,6 @@ function initializeGlobalVariables() {
     });
   }
 
-  // Firebase auth state listener
   if (typeof firebase !== 'undefined' && firebase.auth) {
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
@@ -147,7 +145,8 @@ function showAuthForm() {
   console.log('Showing auth form');
 }
 
-// Global UI functions
+// ===================== GLOBAL UI FUNCTIONS =====================
+
 window.resetPassword = function() {
   const emailInput = document.getElementById('emailInput');
   const email = emailInput ? emailInput.value : prompt('Enter your email:');
@@ -166,6 +165,7 @@ window.resetPassword = function() {
   }
 };
 
+// Navigation functions
 window.openHome = function() {
   const mainApp = document.getElementById('main-app');
   if (mainApp) mainApp.classList.remove('hidden');
@@ -212,6 +212,7 @@ window.openCreatorHub = function() {
   if (creatorHubView) creatorHubView.classList.remove('hidden');
 };
 
+// Notification functions
 window.openNotifications = function() {
   const topNav = document.getElementById('top-navbar');
   if (topNav) topNav.style.display = 'none';
@@ -226,6 +227,7 @@ window.closeNotifications = function() {
   if (notificationsModal) notificationsModal.classList.add('hidden');
 };
 
+// Close functions
 window.closeSearch = function() {
   const searchView = document.getElementById('search-view');
   if (searchView) searchView.classList.add('hidden');
@@ -266,56 +268,166 @@ window.signOutUser = function() {
   }
 };
 
-// Placeholder functions
+// ===================== FOLLOWERS / FOLLOWING FUNCTIONS =====================
+window.openFollowingModal = function() {
+  const modal = document.getElementById('following-modal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.openFollowersModal = function() {
+  const modal = document.getElementById('followers-modal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.openMyFollowersModal = function() {
+  console.log('Opening my followers');
+  const modal = document.getElementById('followers-modal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.openMyFollowingModal = function() {
+  console.log('Opening my following');
+  const modal = document.getElementById('following-modal');
+  if (modal) modal.classList.remove('hidden');
+};
+
+window.closeFollowersModal = function() {
+  const modal = document.getElementById('followers-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+window.closeFollowingModal = function() {
+  const modal = document.getElementById('following-modal');
+  if (modal) modal.classList.add('hidden');
+};
+
+// ===================== STORY/CHAPTER FUNCTIONS =====================
 window.openStoryDetail = function(storyId) { console.log('Open story:', storyId); };
-window.openStoryCreation = function() { const m = document.getElementById('story-creation-modal'); if(m) m.classList.remove('hidden'); };
-window.closeStoryCreation = function() { const m = document.getElementById('story-creation-modal'); if(m) m.classList.add('hidden'); };
+window.openStoryCreation = function() { 
+  const m = document.getElementById('story-creation-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeStoryCreation = function() { 
+  const m = document.getElementById('story-creation-modal');
+  if(m) m.classList.add('hidden');
+};
 window.openStoryEdit = function(storyId) { console.log('Edit story:', storyId); };
-window.closeStoryEdit = function() { const m = document.getElementById('story-edit-modal'); if(m) m.classList.add('hidden'); };
-window.openChapterCreationModal = function() { const m = document.getElementById('chapter-creation-modal'); if(m) m.classList.remove('hidden'); };
-window.closeChapterCreationModal = function() { const m = document.getElementById('chapter-creation-modal'); if(m) m.classList.add('hidden'); };
+window.closeStoryEdit = function() { 
+  const m = document.getElementById('story-edit-modal');
+  if(m) m.classList.add('hidden');
+};
+window.openChapterCreationModal = function() { 
+  const m = document.getElementById('chapter-creation-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeChapterCreationModal = function() { 
+  const m = document.getElementById('chapter-creation-modal');
+  if(m) m.classList.add('hidden');
+};
+window.openChapterReadModal = function() { 
+  const m = document.getElementById('chapter-read-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeChapterReadModal = function() { 
+  const m = document.getElementById('chapter-read-modal');
+  if(m) m.classList.add('hidden');
+};
+window.nextChapter = function() { console.log('Next chapter'); };
+window.prevChapter = function() { console.log('Previous chapter'); };
+
+// ===================== NOTE/SOCIAL FUNCTIONS =====================
 window.saveNote = function() { console.log('Note saved'); };
 window.publishNote = function() { console.log('Note published'); };
 window.deleteNote = function(noteId) { console.log('Delete note:', noteId); };
 window.likeNote = function(noteId) { console.log('Like note:', noteId); };
 window.likePhoto = function(photoId) { console.log('Like photo:', photoId); };
-window.openImageGenerator = function() { const m = document.getElementById('image-generator-modal'); if(m) m.classList.remove('hidden'); };
-window.closeImageGenerator = function() { const m = document.getElementById('image-generator-modal'); if(m) m.classList.add('hidden'); };
-window.generateImage = function() { console.log('Generate image'); };
-window.useGeneratedImage = function() { console.log('Use image'); };
-window.openFrameSelector = function() { const m = document.getElementById('frame-selector-modal'); if(m) m.classList.remove('hidden'); };
-window.closeFrameSelector = function() { const m = document.getElementById('frame-selector-modal'); if(m) m.classList.add('hidden'); };
-window.selectFrame = function(frame, cost) { console.log('Select frame:', frame); };
-window.openLiveStreamModal = function() { const m = document.getElementById('live-stream-modal'); if(m) m.classList.remove('hidden'); };
-window.closeLiveStreamModal = function() { const m = document.getElementById('live-stream-modal'); if(m) m.classList.add('hidden'); };
-window.sendGift = function(gift) { console.log('Send gift:', gift); };
-window.sendHeart = function() { console.log('Send heart'); };
-window.openNoteCreation = function() { const m = document.getElementById('note-creation-modal'); if(m) m.classList.remove('hidden'); };
-window.closeNoteModal = function() { const m = document.getElementById('note-modal'); if(m) m.classList.add('hidden'); };
+window.openNoteCreation = function() { 
+  const m = document.getElementById('note-creation-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeNoteModal = function() { 
+  const m = document.getElementById('note-modal');
+  if(m) m.classList.add('hidden');
+};
 window.openAuthorProfile = function(authorId) { console.log('Open author:', authorId); };
-window.closeAuthorProfile = function() { const m = document.getElementById('author-profile-modal'); if(m) m.classList.add('hidden'); };
+window.closeAuthorProfile = function() { 
+  const m = document.getElementById('author-profile-modal');
+  if(m) m.classList.add('hidden');
+};
 window.followAuthor = function(authorId) { console.log('Follow author:', authorId); };
 window.followUser = function(userId) { console.log('Follow user:', userId); };
-window.openFollowersModal = function() { const m = document.getElementById('followers-modal'); if(m) m.classList.remove('hidden'); };
-window.closeFollowersModal = function() { const m = document.getElementById('followers-modal'); if(m) m.classList.add('hidden'); };
-window.openFollowingModal = function() { const m = document.getElementById('following-modal'); if(m) m.classList.remove('hidden'); };
-window.closeFollowingModal = function() { const m = document.getElementById('following-modal'); if(m) m.classList.add('hidden'); };
-window.openSupportModal = function() { const m = document.getElementById('support-modal'); if(m) m.classList.remove('hidden'); };
-window.closeSupportModal = function() { const m = document.getElementById('support-modal'); if(m) m.classList.add('hidden'); };
-window.openSettingsFullscreen = function() { const m = document.getElementById('settings-fullscreen'); if(m) m.classList.remove('hidden'); };
-window.closeSettingsFullscreen = function() { const m = document.getElementById('settings-fullscreen'); if(m) m.classList.add('hidden'); };
-window.openProfileEdit = function() { const m = document.getElementById('profile-edit-modal'); if(m) m.classList.remove('hidden'); };
-window.closeProfileEdit = function() { const m = document.getElementById('profile-edit-modal'); if(m) m.classList.add('hidden'); };
-window.saveProfileEdits = function() { console.log('Profile updated'); window.closeProfileEdit(); };
+
+// ===================== MODAL FUNCTIONS =====================
+window.openLiveStreamModal = function() { 
+  const m = document.getElementById('live-stream-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeLiveStreamModal = function() { 
+  const m = document.getElementById('live-stream-modal');
+  if(m) m.classList.add('hidden');
+};
+window.sendGift = function(gift) { console.log('Send gift:', gift); };
+window.sendHeart = function() { console.log('Send heart'); };
+window.openImageGenerator = function() { 
+  const m = document.getElementById('image-generator-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeImageGenerator = function() { 
+  const m = document.getElementById('image-generator-modal');
+  if(m) m.classList.add('hidden');
+};
+window.generateImage = function() { console.log('Generate image'); };
+window.useGeneratedImage = function() { console.log('Use image'); };
+window.openFrameSelector = function() { 
+  const m = document.getElementById('frame-selector-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeFrameSelector = function() { 
+  const m = document.getElementById('frame-selector-modal');
+  if(m) m.classList.add('hidden');
+};
+window.selectFrame = function(frame, cost) { console.log('Select frame:', frame); };
+window.openSupportModal = function() { 
+  const m = document.getElementById('support-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeSupportModal = function() { 
+  const m = document.getElementById('support-modal');
+  if(m) m.classList.add('hidden');
+};
+window.openSettingsFullscreen = function() { 
+  const m = document.getElementById('settings-fullscreen');
+  if(m) m.classList.remove('hidden');
+};
+window.closeSettingsFullscreen = function() { 
+  const m = document.getElementById('settings-fullscreen');
+  if(m) m.classList.add('hidden');
+};
+window.openProfileEdit = function() { 
+  const m = document.getElementById('profile-edit-modal');
+  if(m) m.classList.remove('hidden');
+};
+window.closeProfileEdit = function() { 
+  const m = document.getElementById('profile-edit-modal');
+  if(m) m.classList.add('hidden');
+};
+window.saveProfileEdits = function() { 
+  console.log('Profile updated');
+  window.closeProfileEdit();
+};
+
+// ===================== UTILITY FUNCTIONS =====================
 window.switchCommunityTab = function(tab) { console.log('Switch tab:', tab); };
 window.toggleNotification = function(id) { console.log('Toggle notification:', id); };
 window.openLatestStory = function(userId, storyId) { console.log('Open story:', storyId); };
-window.nextChapter = function() { console.log('Next chapter'); };
-window.prevChapter = function() { console.log('Previous chapter'); };
-window.closeChapterReadModal = function() { const m = document.getElementById('chapter-read-modal'); if(m) m.classList.add('hidden'); };
-window.openChapterReadModal = function() { const m = document.getElementById('chapter-read-modal'); if(m) m.classList.remove('hidden'); };
-window.clearSearchInput = function() { const i = document.getElementById('search-input'); if(i) i.value = ''; };
-window.closeBlockedErrorModal = function() { const m = document.getElementById('blocked-error-modal'); if(m) m.classList.add('hidden'); };
+window.clearSearchInput = function() { 
+  const i = document.getElementById('search-input');
+  if(i) i.value = '';
+};
+window.closeBlockedErrorModal = function() { 
+  const m = document.getElementById('blocked-error-modal');
+  if(m) m.classList.add('hidden');
+};
 window.confirmDeleteStory = function() { console.log('Delete story'); };
 window.backToStoryType = function() { console.log('Back to story type'); };
 window.selectStoryType = function(type) { console.log('Select type:', type); };
