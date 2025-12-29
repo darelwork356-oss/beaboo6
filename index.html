@@ -394,34 +394,6 @@ body {
     box-shadow: 0 0 0 10px rgba(254, 44, 85, 0);
   }
   100% {
-
-function saveScheduledChapter(chapterId, publishDate) {
-  firebase.database().ref('scheduledChapters/' + chapterId).set({
-    publishDate: publishDate,
-    status: 'pending'
-  });
-}
-
-function checkScheduledChapters() {
-  const now = new Date().getTime();
-  firebase.database().ref('scheduledChapters').once('value', snapshot => {
-    snapshot.forEach(child => {
-      const scheduled = child.val();
-      if (scheduled.status === 'pending' && new Date(scheduled.publishDate).getTime() <= now) {
-        // Publicar el capítulo
-        firebase.database().ref('stories/' + currentEditingStory.id + '/chapters/' + child.key).update({
-          status: 'published'
-        });
-        // Actualizar estado del capítulo programado
-        child.ref.update({ status: 'published' });
-      }
-    });
-  });
-}
-
-// Verificar capítulos programados cada minuto
-setInterval(checkScheduledChapters, 60000);
-
     box-shadow: 0 0 0 0 rgba(16, 163, 127, 0);
   }
 }
@@ -4476,67 +4448,6 @@ firebase.auth().onAuthStateChanged(user => {
 <style>
   /* Estilos TikTok */
   * {
-
-
-  async function handleNoteLike(noteId, likeButton) {
-    const user = firebase.auth().currentUser;
-    if (!user) {
-      alert('Debes iniciar sesión para dar like');
-      return;
-    }
-
-    // Verificar si ya dio like
-    if (likeButton.classList.contains('text-[#FE2C55]')) {
-      alert('Ya diste like a esta nota');
-      return;
-    }
-
-    const originalHTML = likeButton.innerHTML;
-    likeButton.disabled = true;
-    likeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-
-    try {
-      const response = await fetch('/.netlify/functions/like-note', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          noteId: noteId,
-          userId: user.uid
-        })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 429) {
-          alert(result.message || 'Has alcanzado el límite de likes por hoy');
-        } else {
-          throw new Error(result.error || 'Error al dar like');
-        }
-        likeButton.disabled = false;
-        likeButton.innerHTML = originalHTML;
-        return;
-      }
-
-      // Actualizar UI
-      likeButton.classList.add('text-[#FE2C55]');
-      const likesCount = likeButton.querySelector('.likes-count');
-      if (likesCount) {
-        likesCount.textContent = result.likes;
-      }
-      likeButton.disabled = false;
-      likeButton.innerHTML = `<i class="fas fa-heart"></i> <span class="likes-count">${result.likes}</span>`;
-      
-    } catch (error) {
-      console.error('Error al dar like:', error);
-      alert('Error al dar like. Por favor intenta de nuevo.');
-      likeButton.disabled = false;
-      likeButton.innerHTML = originalHTML;
-    }
-  }
-
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -6427,7 +6338,7 @@ function openPhotoDetail(photo) {
         ${photo.content ? `<p class="text-gray-700">${photo.content}</p>` : ''}
         <div class="mt-4 flex items-center justify-between">
           <div class="flex items-center space-x-4">
-            <button onclick="likePhoto('${photo.id || ''}')" class="flex items-center text-gray-600">
+            <button onclick="likePhoto('${photo.id}', this)" class="flex items-center text-gray-600">
               <i class="fas fa-heart mr-1"></i>
               <span>${photo.likes || 0}</span>
             </button>
